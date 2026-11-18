@@ -31,12 +31,29 @@
       scroll-padding-top:env(safe-area-inset-top,0px);
       scroll-behavior:smooth;
     }
+    html {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: clip;
+      scrollbar-gutter: stable;
+    }
+    /* Landing page: the whole screen is scaled to fit the window, so nothing can scroll or fall off the bottom */
+    html.fit, html.fit body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+    body {
+      width: 100%;
+      max-width: 100%;
+    }
     body {
       margin:0;
       background:radial-gradient(1200px 500px at 50% -100px,#2a2418,var(--bg));
       color:var(--t);
       font-family:Oswald,system-ui,sans-serif;
       font-size:16px;
+      -webkit-text-size-adjust: 100%;
     }
     h1,h2,h3 {
       font-family:'Bebas Neue',Impact,sans-serif;
@@ -47,16 +64,24 @@
 
     /* ===== Header & navigation ===== */
     header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:12px 18px;
+      display:block;
+      padding:0;
       border-bottom:2px solid var(--y);
       position:sticky;
       top:env(safe-area-inset-top,0px);
       background:rgba(23,24,27,.94);
       backdrop-filter:blur(8px);
       z-index:5;
+    }
+    /* The header bar is always full window width; its contents use the same 1150px design width as the page and are scaled with it */
+    .hdr-in {
+      width:var(--dw,1150px);
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 18px;
+      transform-origin:top left;
     }
     header h1 {
       font-size:30px;
@@ -137,8 +162,9 @@
     }
     .chips {
       display:flex;
+      flex-wrap:wrap;
       gap:8px;
-      overflow-x:auto;
+      overflow:visible;
       padding:10px 0;
       position:sticky;
       top:calc(58px + env(safe-area-inset-top,0px));
@@ -160,19 +186,7 @@
       grid-template-columns:1fr 340px;
       gap:18px;
     }
-    @media(max-width:820px) {
-      .layout {
-        grid-template-columns:1fr;
-      }
-      .hero h2 {
-        font-size:32px;
-      }
-      .hero .hero-badge {
-        width:72px;
-        height:72px;
-        border-radius:12px;
-      }
-    }
+
     .cat {
       font-size:28px;
       margin:18px 0 10px;
@@ -355,20 +369,7 @@
     .fab {
       display:none;
     }
-    @media(max-width:820px) {
-      .fab {
-        display:flex;
-        position:fixed;
-        left:12px;
-        right:12px;
-        bottom:calc(12px + env(safe-area-inset-bottom,0px));
-        z-index:6;
-        box-shadow:0 6px 20px #000a;
-      }
-      main {
-        padding-bottom:90px;
-      }
-    }
+
     .ok {
       text-align:center;
       padding:30px 10px;
@@ -384,11 +385,7 @@
       grid-template-columns:repeat(3,1fr);
       gap:14px;
     }
-    @media(max-width:820px) {
-      .cols {
-        grid-template-columns:1fr;
-      }
-    }
+
     .col h3 {
       font-size:22px;
       padding:6px 0;
@@ -500,11 +497,7 @@
       grid-template-columns:1fr 1fr;
       gap:14px;
     }
-    @media(max-width:820px) {
-      .g2 {
-        grid-template-columns:1fr;
-      }
-    }
+
     .sm {
       width:70px;
       margin:0;
@@ -583,36 +576,36 @@
       backdrop-filter:blur(6px);
       z-index:20;
       display:flex;
-      align-items:flex-end;
+      align-items:center;
       justify-content:center;
+      overflow:hidden;
+      overflow:clip; /* cannot be scrolled at all, not even by keyboard focus */
+      padding:0;
       opacity:1;
       transition:opacity .2s ease-out;
     }
     .ov.closing {
       opacity:0;
     }
+    /* The sheet always keeps its full design size (540px wide) and is scaled by JS (fitSheet)
+       so it fits any window, phone or tablet. It never scrolls, never shows a scrollbar,
+       and nothing is pushed to the bottom. */
     .sheet {
       background:var(--card);
-      width:100%;
-      max-width:520px;
-      max-height:92vh;
-      overflow:auto;
-      border-radius:20px 20px 0 0;
-      padding:18px;
+      width:540px;
+      max-width:none;
+      max-height:none;
+      overflow:visible;
+      border-radius:20px;
+      padding:14px 18px;
       position:relative;
-      animation:up .2s ease-out;
-      transition:transform .2s ease-out;
+      margin:0;
+      flex:none;
+      transform-origin:center center;
+      visibility:hidden; /* shown by fitSheet() once it has been scaled, avoids a flash at the wrong size */
     }
-    .ov.closing .sheet {
-      transform:translateY(30px);
-    }
-    @media(min-width:700px) {
-      .ov {
-        align-items:center;
-      }
-      .sheet {
-        border-radius:20px;
-      }
+    .sheet.fitted {
+      visibility:visible;
     }
     @keyframes up {
       from {
@@ -638,8 +631,8 @@
       width:100%;
     }
     .sheet h4 {
-      margin:16px 0 8px;
-      font:400 18px 'Bebas Neue',Impact,sans-serif;
+      margin:11px 0 6px;
+      font:400 17px 'Bebas Neue',Impact,sans-serif;
       letter-spacing:.06em;
       color:var(--y);
     }
@@ -704,11 +697,10 @@
       display:flex;
       gap:12px;
       align-items:center;
-      margin-top:16px;
-      position:sticky;
-      bottom:-18px;
+      margin-top:12px;
+      position:static;
       background:var(--card);
-      padding:10px 0;
+      padding:4px 0 0;
     }
     .q.big {
       font-size:20px;
@@ -753,17 +745,13 @@
     .cart .row b {
       font-weight:600;
     }
-    @media(max-width:480px) {
-      .adds {
-        grid-template-columns:1fr;
-      }
-    }
+
     /* ===== Cart sections, payment picker, GCash box ===== */
     .cart h2 { font-size: 26px; margin-bottom: 6px; }
     .cart .sec { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
     .cart .sec h4 { margin: 0 0 6px; font: 400 17px 'Bebas Neue', Impact, sans-serif; letter-spacing: .06em; color: var(--y); }
     .cart input { margin: 6px 0; }
-    @media (min-width: 821px) { .cart { max-height: calc(100vh - 150px); overflow: auto; } }
+    .cart { max-height: none; overflow: visible; position: static; }
     .pms { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .pm { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); color: var(--t); font: 600 15px Oswald, sans-serif; cursor: pointer; text-align: left; }
     .pm small { font-weight: 400; font-size: 12px; color: var(--m); }
@@ -775,8 +763,8 @@
     .amt { font: 400 34px 'Bebas Neue', Impact, sans-serif; color: var(--y); line-height: 1.1; }
     .gno { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 18px; letter-spacing: .04em; margin-top: 4px; }
     .gno button { border: 1px solid var(--line); background: none; color: var(--t); border-radius: 8px; padding: 3px 10px; font: 14px Oswald, sans-serif; cursor: pointer; }
-    .place { position: sticky; bottom: -14px; margin-top: 12px; background: var(--card); padding: 10px 0 2px; }
-    @media (max-width: 820px) { .cart { position: static; } .place { position: static; } }
+    .place { position: static; margin-top: 12px; background: var(--card); padding: 10px 0 2px; }
+
     .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 12px; margin: 2px 0; }
     .pill.cash, .pill.ok { background: #17302a; color: #4cc38a; }
     .pill.wait { background: #3a2f0a; color: var(--y); }
@@ -784,7 +772,7 @@
     /* ===== Self-service kiosk welcome screen ===== */
     .welcome {
       max-width: 1240px;
-      min-height: min(760px, calc(100vh - 110px));
+      min-height: 760px;
       margin: 18px auto;
       padding: 28px;
       display: grid;
@@ -895,34 +883,573 @@
       letter-spacing: .12em;
       text-transform: uppercase;
     }
-    @media (max-width: 760px) {
-      .welcome { min-height: 0; margin: 10px; padding: 18px; grid-template-columns: 1fr; gap: 22px; border-radius: 20px; }
-      .welcome-copy { padding: 12px 4px 0; }
-      .welcome-title { font-size: clamp(56px, 15vw, 82px); }
-      .welcome-description { margin: 18px 0 22px; font-size: 15px; }
-      .welcome-video-wrap { min-height: 0; aspect-ratio: 16 / 10; max-height: none; }
-      .start-order { width: 100%; }
-      .welcome-footer { padding: 0 14px; font-size: 9px; }
-    }
+
     @media (prefers-reduced-motion: reduce) {
       .start-order { transition: none; }
       .start-order:hover { transform: none; }
     }
 
-  </style>
+
+    /* ===== New customer-only 3D iced caramel macchiato scroll intro ===== */
+    body:has(.coffee-intro) header { display:none; }
+    body:has(.coffee-intro) #scale-wrapper main { padding:0; }
+    .coffee-intro {
+      --p:0;
+      position:relative;
+      width:100%;
+      height:720vh;
+      margin:0 auto;
+      color:#f7f0e5;
+      overflow:clip;
+      isolation:isolate;
+      background:#11100e;
+    }
+    .coffee-intro::before {
+      content:""; position:absolute; inset:0;
+      background:radial-gradient(ellipse at 50% 42%,rgba(151,91,39,.25),transparent 38%),
+        radial-gradient(ellipse at 18% 18%,rgba(245,184,0,.08),transparent 30%),
+        linear-gradient(180deg,#171512,#0d0d0d 65%,#17130e);
+      pointer-events:none;
+    }
+    .coffee-sticky {
+      position:sticky; top:0; height:100svh; min-height:540px;
+      display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,.9fr);
+      align-items:center; gap:2vw; padding:clamp(18px,4vw,58px);
+      overflow:hidden;
+    }
+    .coffee-copy { position:relative; z-index:2; max-width:560px; }
+    .coffee-eyebrow { color:#e7ad50; font:600 11px Oswald,sans-serif; letter-spacing:.28em; text-transform:uppercase; }
+    .coffee-headline { margin:18px 0 14px; font:400 clamp(48px,7vw,94px)/.88 'Bebas Neue',Impact,sans-serif; letter-spacing:.015em; }
+    .coffee-headline span { display:block; color:#e9b45d; }
+    .coffee-step { min-height:30px; color:#e8c18a; font:600 clamp(14px,1.5vw,18px) Oswald,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    .coffee-desc { max-width:390px; margin:14px 0 0; color:#aaa39a; font:400 15px/1.7 Oswald,sans-serif; }
+    .coffee-progress { display:flex; align-items:center; gap:12px; margin-top:32px; color:#77716a; font:11px Oswald,sans-serif; letter-spacing:.18em; text-transform:uppercase; }
+    .coffee-progress-track { width:min(180px,35vw); height:2px; background:#3c342b; overflow:hidden; }
+    .coffee-progress-track i { display:block; width:calc(var(--p)*100%); height:100%; background:#e9b45d; }
+    .coffee-scene { position:relative; z-index:1; height:min(76vh,700px); min-height:390px; display:grid; place-items:center; perspective:1100px; }
+    .coffee-glow { position:absolute; width:min(70%,420px); aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,rgba(230,157,73,.22),rgba(230,157,73,0) 68%); filter:blur(8px); }
+    .coffee-cup-wrap { position:relative; width:clamp(190px,24vw,300px); height:clamp(300px,42vw,470px); transform-style:preserve-3d; transform:rotateY(-13deg) rotateX(4deg); filter:drop-shadow(24px 30px 24px rgba(0,0,0,.48)); }
+    .coffee-cup { position:absolute; inset:7% 4% 0; overflow:hidden; clip-path:polygon(4% 0,96% 0,80% 100%,20% 100%); border-left:3px solid rgba(255,255,255,.62); border-right:3px solid rgba(255,255,255,.3); border-bottom:4px solid rgba(255,255,255,.48); background:linear-gradient(90deg,rgba(255,255,255,.18),rgba(255,255,255,.025) 23%,rgba(255,255,255,.10) 68%,rgba(255,255,255,.2)); box-shadow:inset 12px 0 18px rgba(255,255,255,.09),inset -10px 0 18px rgba(0,0,0,.2); }
+    .coffee-cup::before { content:"H-HOOD"; position:absolute; z-index:8; left:0; right:0; top:49%; text-align:center; color:rgba(255,255,255,.78); font:600 13px Oswald,sans-serif; letter-spacing:.22em; text-shadow:0 2px 4px #583a20; }
+    .coffee-cup::after { content:""; position:absolute; z-index:7; inset:0; background:linear-gradient(105deg,rgba(255,255,255,.24),transparent 24%,transparent 72%,rgba(255,255,255,.16)); pointer-events:none; }
+    .coffee-liquid { position:absolute; left:0; right:0; bottom:0; transform-origin:bottom; transition:transform .18s linear,opacity .18s linear; }
+    .coffee-syrup { height:14%; opacity:calc(clamp(0,(var(--p) - .10)*12,1)); transform:scaleY(clamp(0,(var(--p) - .10)*7,1)); background:linear-gradient(90deg,#6e3516,#b96b2b 36%,#7b3d18 78%,#d18a40); }
+    .coffee-espresso { height:25%; bottom:14%; opacity:calc(clamp(0,(var(--p) - .28)*12,1)); transform:scaleY(clamp(0,(var(--p) - .28)*7,1)); background:linear-gradient(90deg,#31170e,#6b3219 48%,#32180e); }
+    .coffee-milk { height:34%; bottom:39%; opacity:calc(clamp(0,(var(--p) - .43)*12,1)); transform:scaleY(clamp(0,(var(--p) - .43)*7,1)); background:linear-gradient(90deg,#d8c3a3,#f5e7ce 42%,#c9b18d); mix-blend-mode:screen; }
+    .coffee-ice { position:absolute; z-index:4; left:18%; right:18%; bottom:34%; height:44%; opacity:clamp(0,(var(--p) - .59)*10,1); transform:translateY(calc((1 - clamp(0,(var(--p) - .59)*8,1))*-65px)); transition:opacity .2s linear,transform .2s linear; }
+    .coffee-ice i { position:absolute; width:26%; height:24%; border-radius:7px; background:linear-gradient(135deg,rgba(255,255,255,.88),rgba(169,211,225,.3)); border:1px solid rgba(255,255,255,.75); box-shadow:inset 4px 4px 8px rgba(255,255,255,.65),0 3px 8px #382a1b66; transform:rotate(14deg); }
+    .coffee-ice i:nth-child(1){left:4%;top:16%}.coffee-ice i:nth-child(2){right:4%;top:4%;transform:rotate(-12deg)}.coffee-ice i:nth-child(3){left:35%;top:42%;transform:rotate(22deg)}.coffee-ice i:nth-child(4){right:5%;top:58%;transform:rotate(9deg)}
+    .coffee-drizzle { position:absolute; z-index:6; left:16%; right:16%; top:13%; height:16%; opacity:clamp(0,(var(--p) - .74)*12,1); transform:translateY(calc((1 - clamp(0,(var(--p) - .74)*8,1))*-24px)); transition:opacity .2s linear,transform .2s linear; }
+    .coffee-drizzle i { position:absolute; top:0; width:8px; height:100%; border-radius:10px; background:linear-gradient(90deg,#6c3216,#c47a32,#6c3216); transform:rotate(var(--r)); box-shadow:0 1px 2px #2b160d; }
+    .coffee-drizzle i:nth-child(1){left:12%;--r:25deg}.coffee-drizzle i:nth-child(2){left:37%;--r:-18deg}.coffee-drizzle i:nth-child(3){left:65%;--r:15deg}.coffee-drizzle i:nth-child(4){left:84%;--r:-27deg}
+    .coffee-stream { position:absolute; z-index:5; top:-2%; left:48%; width:7px; height:36%; border-radius:20px; opacity:0; transform:scaleY(0); transform-origin:top; background:linear-gradient(90deg,#6b3219,#d18a40,#6b3219); box-shadow:0 0 14px #d18a4044; }
+    .coffee-stream.syrup { opacity:0; transform:scaleY(clamp(0,(var(--p) - .10)*7,1)); }
+    .coffee-stream.espresso { top:3%; height:31%; background:linear-gradient(90deg,#28120b,#80401e,#28120b); opacity:0; transform:scaleY(clamp(0,(var(--p) - .29)*7,1)); }
+    .coffee-stream.milk { top:0; height:38%; background:linear-gradient(90deg,#cdbb9e,#fff1d6,#cdbb9e); opacity:0; transform:scaleY(clamp(0,(var(--p) - .44)*7,1)); }
+    .coffee-lid { position:absolute; z-index:9; top:2%; left:1%; right:1%; height:9%; border-radius:50% 50% 18% 18% / 38% 38% 25% 25%; background:linear-gradient(180deg,#fff,#c9c8c2 46%,#777873 100%); border:2px solid rgba(255,255,255,.8); box-shadow:0 9px 12px #0008; transform:translateY(calc((1 - clamp(0,(var(--p) - .87)*9,1))*-130px)) rotateX(18deg); transition:transform .22s ease-out; }
+    .coffee-lid::after { content:""; position:absolute; left:39%; top:18%; width:22%; height:18%; border-radius:50%; background:#45433f; box-shadow:0 1px 0 #fff8; }
+    .coffee-cup-shadow { position:absolute; bottom:1%; left:18%; right:18%; height:6%; border-radius:50%; background:#0009; filter:blur(14px); }
+    .coffee-skip { position:absolute; z-index:5; top:24px; right:clamp(18px,4vw,58px); border:1px solid #65513a; border-radius:30px; padding:9px 16px; color:#d5c6ae; background:#171512aa; font:600 11px Oswald,sans-serif; letter-spacing:.16em; cursor:pointer; }
+    .coffee-scrollhint { position:absolute; z-index:3; left:clamp(18px,4vw,58px); bottom:25px; color:#8d8377; font:11px Oswald,sans-serif; letter-spacing:.2em; text-transform:uppercase; }
+    .coffee-scrollhint::after { content:""; display:inline-block; width:32px; height:1px; margin:0 0 3px 10px; background:#d9a34d; }
+    @media(max-width:820px) {
+      .coffee-intro { width:100%; height:680vh; }
+      .coffee-sticky { min-height:560px; height:100svh; grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); gap:0; padding:64px 20px 38px; align-content:center; }
+      .coffee-copy { align-self:end; text-align:center; margin:0 auto; }
+      .coffee-headline { font-size:clamp(48px,13vw,76px); margin:10px 0 8px; }
+      .coffee-desc { display:none; }
+      .coffee-step { font-size:13px; }
+      .coffee-progress { justify-content:center; margin-top:12px; }
+      .coffee-scene { height:100%; min-height:280px; max-height:52vh; }
+      .coffee-cup-wrap { width:clamp(160px,43vw,235px); height:clamp(260px,59vw,350px); }
+      .coffee-skip { top:12px; right:14px; padding:8px 12px; }
+      .coffee-scrollhint { left:0; right:0; bottom:12px; text-align:center; }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      .coffee-liquid,.coffee-ice,.coffee-drizzle,.coffee-lid,.coffee-stream { transition:none !important; }
+    }
+
+    /* ===== Phone-first sizing: iOS Safari, Android Chrome and Huawei browsers ===== */
+    .coffee-intro { min-width:0; width:100%; }
+    .coffee-sticky { min-width:0; }
+    .coffee-copy, .coffee-scene { min-width:0; }
+    @media (max-width: 820px) {
+      .coffee-intro {
+        height:680vh;
+        height:calc(680 * 1vh);
+        height:680svh;
+        min-height:0;
+        overflow:clip;
+        touch-action:pan-y;
+      }
+      .coffee-sticky {
+        position:sticky;
+        top:0;
+        height:100vh;
+        height:100svh;
+        height:100dvh;
+        min-height:0;
+        max-height:100dvh;
+        grid-template-columns:minmax(0,1fr);
+        grid-template-rows:auto minmax(0,1fr);
+        align-items:stretch;
+        justify-items:stretch;
+        gap:clamp(4px,1.2vh,12px);
+        padding:calc(env(safe-area-inset-top, 0px) + 54px) clamp(14px,4vw,24px) calc(env(safe-area-inset-bottom, 0px) + 48px);
+        overflow:hidden;
+      }
+      .coffee-copy {
+        align-self:start;
+        justify-self:center;
+        width:min(100%,560px);
+        text-align:center;
+        margin:0 auto;
+      }
+      .coffee-eyebrow { font-size:clamp(9px,2.5vw,11px); letter-spacing:.2em; }
+      .coffee-headline {
+        font-size:clamp(38px,10.5vw,68px);
+        line-height:.9;
+        margin:clamp(6px,1.2vh,12px) 0 7px;
+        overflow-wrap:anywhere;
+      }
+      .coffee-step { min-height:1.35em; font-size:clamp(11px,3.1vw,14px); letter-spacing:.08em; }
+      .coffee-desc { display:none; }
+      .coffee-progress { justify-content:center; gap:8px; margin-top:clamp(8px,1.5vh,14px); font-size:9px; }
+      .coffee-progress-track { width:min(32vw,130px); }
+      .coffee-scene {
+        align-self:center;
+        justify-self:center;
+        width:100%;
+        height:100%;
+        min-height:0;
+        max-height:48dvh;
+        overflow:visible;
+        perspective:900px;
+      }
+      .coffee-cup-wrap {
+        width:min(53vw, min(250px, 34dvh));
+        height:min(69vw, min(360px, 46dvh));
+        max-width:250px;
+        max-height:360px;
+      }
+      .coffee-stream { width:6px; }
+      .coffee-drizzle i { width:clamp(4px,1.4vw,7px); }
+      .coffee-lid { box-shadow:0 5px 9px #0008; }
+      .coffee-skip {
+        top:calc(env(safe-area-inset-top, 0px) + 10px);
+        right:max(12px, env(safe-area-inset-right, 0px));
+        min-height:40px;
+        padding:9px 13px;
+        font-size:10px;
+        z-index:10;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .coffee-scrollhint {
+        left:0; right:0;
+        bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);
+        text-align:center;
+        font-size:9px;
+        letter-spacing:.14em;
+        padding:0 12px;
+      }
+    }
+    @media (max-width: 380px) {
+      .coffee-sticky { padding-left:12px; padding-right:12px; gap:4px; }
+      .coffee-headline { font-size:clamp(35px,10vw,42px); }
+      .coffee-step { font-size:11px; }
+      .coffee-progress { gap:6px; font-size:8px; }
+      .coffee-progress-track { width:27vw; }
+      .coffee-scene { max-height:44dvh; }
+      .coffee-cup-wrap { width:min(58vw,210px); height:min(76vw,290px); }
+    }
+    @media (max-height: 650px) and (max-width: 820px) {
+      .coffee-sticky { padding-top:calc(env(safe-area-inset-top, 0px) + 48px); padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 40px); }
+      .coffee-headline { font-size:clamp(34px,8.5vw,54px); margin:5px 0; }
+      .coffee-progress { margin-top:6px; }
+      .coffee-scene { max-height:40dvh; }
+      .coffee-cup-wrap { width:min(42vw,185px); height:min(58vw,250px); }
+    }
+    @media (orientation:landscape) and (max-width: 900px) {
+      .coffee-sticky {
+        grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+        grid-template-rows:minmax(0,1fr);
+        gap:8px;
+        padding:calc(env(safe-area-inset-top, 0px) + 38px) clamp(12px,3vw,24px) calc(env(safe-area-inset-bottom, 0px) + 34px);
+      }
+      .coffee-copy { align-self:center; text-align:left; }
+      .coffee-headline { font-size:clamp(34px,6vw,58px); }
+      .coffee-progress { justify-content:flex-start; }
+      .coffee-scene { max-height:78dvh; }
+      .coffee-cup-wrap { width:min(30vw,210px); height:min(66dvh,290px); }
+      .coffee-scrollhint { bottom:calc(env(safe-area-inset-bottom, 0px) + 8px); }
+    }
+    @supports not (height: 100dvh) {
+      @media (max-width:820px) {
+        .coffee-sticky { height:100svh; }
+        .coffee-scene { max-height:48svh; }
+        .coffee-cup-wrap { height:min(69vw,46svh); }
+      }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .coffee-sticky { scroll-behavior:auto; }
+      .coffee-liquid,.coffee-ice,.coffee-drizzle,.coffee-lid,.coffee-stream { transition:none !important; }
+    }
+
+    /* ===== Accessibility, touch targets, new features ===== */
+    .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    .q button { width:36px; height:36px; position:relative; }
+    .q button::after { content:""; position:absolute; inset:-6px; }
+    .q.big button { width:40px; height:40px; }
+    .q.big button::after { inset:-4px; }
+    .x { width:48px; height:48px; top:4px; right:4px; display:grid; place-items:center; }
+    @media (pointer:coarse), (max-width:820px) {
+      .op, .ad, .seg button, .chips button, .pm, .gno button, .tabs button, .btn.s { min-height:48px; }
+    }
+    select { background:var(--bg); color:var(--t); border:1px solid var(--line); border-radius:8px; padding:10px; font:inherit; }
+    .dts { display:flex; gap:4px; flex-wrap:wrap; padding:0 10px; }
+    .dt { font-size:11px; font-weight:600; border-radius:10px; padding:1px 7px; background:#17302a; color:var(--g); white-space:nowrap; }
+    .dt.dy { background:#3a2f0a; color:var(--y); }
+    .dietbar { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 2px; }
+    .dietbar .op[aria-pressed="true"] { background:var(--y); color:#111; border-color:var(--y); }
+    .favs .row { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 12px; margin-bottom:6px; }
+    .btn.gh { background:transparent; color:var(--t); border:1px solid var(--line); }
+    .start-order.trk { background:transparent; color:var(--y); border:2px solid var(--y); box-shadow:none; display:flex; margin-top:12px; }
+    .tl { list-style:none; margin:16px 0; padding:0; text-align:left; }
+    .tl li { display:flex; gap:12px; align-items:center; padding:8px 0; color:var(--m); }
+    .tl li i { width:28px; height:28px; border-radius:50%; border:2px solid var(--line); display:grid; place-items:center; font-style:normal; font-size:13px; flex:none; }
+    .tl li.on { color:var(--t); }
+    .tl li.on i { background:var(--g); border-color:var(--g); color:#06210f; }
+    .tl li.cur { color:var(--y); font-weight:600; }
+    .tl li.cur i { background:var(--y); border-color:var(--y); color:#111; animation:pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 50% { box-shadow:0 0 0 6px rgba(245,184,0,.25); } }
+    @media (prefers-reduced-motion:reduce) { .tl li.cur i { animation:none; } }
+    #ticket { display:none; }
+    #ticket .receipt-title { text-align:center; font-weight:700; font-size:16px; }
+    #ticket .receipt-small { font-size:10px; text-align:center; }
+    #ticket .receipt-row { display:flex; justify-content:space-between; gap:8px; }
+    #ticket .receipt-total { font-weight:700; font-size:14px; }
+    #ticket .receipt-note { font-size:9px; text-align:center; margin-top:8px; }
+    @media print {
+      @page { margin:3mm; }
+      body::before { display:none !important; }
+      body > *:not(#ticket) { display:none !important; }
+      html, body {
+      min-width: auto !important; height: auto !important; background:#fff !important; }
+      #scale-wrapper, .hdr-in { transform: none !important; zoom: 1 !important; width: auto !important; }
+      #ticket { display:block !important; width:76mm; color:#000; background:#fff; font:11px/1.35 monospace; padding:2mm; }
+      #ticket h2 { font:700 18px monospace; text-align:center; color:#000; }
+      #ticket .tn { font:700 40px monospace; text-align:center; }
+      #ticket hr { border:0; border-top:1px dashed #000; }
+      #ticket small { color:#000; }
+    }
+
+  
+
+    /* ===== Universal Proportional Scaling (floating windows, tablets, iOS & Android) =====
+       The whole app is laid out once at a fixed 1150px design width and then scaled
+       (see scaleApp in the script), so the Landing, Order and Staff pages keep exactly
+       the same layout at every window size. Nothing re-stacks or drops to the bottom. */
+    #scale-wrapper {
+      width: var(--dw, 1150px);
+      margin: 0 auto;
+      transform-origin: top left;
+    }
+    #scale-wrapper main {
+      width: calc(var(--dw, 1150px) - 30px);
+      max-width: 1120px;
+    }
+
+    /* ===== Real responsive customer + tablet layouts =====
+       Phones use the available screen width instead of shrinking the 1150px desktop canvas.
+       The staff screen also reflows naturally on an iPad in portrait orientation. */
+    @media (max-width: 820px) {
+      html, html.fit, html.fit body { height:auto; min-height:100%; overflow-x:hidden; overflow-y:auto; }
+      body { min-height:100vh; }
+      header { position:sticky; top:0; }
+      .hdr-in { width:100% !important; padding:10px 14px; gap:10px; }
+      header h1 { font-size:25px; line-height:1; }
+      header small { font-size:10px; letter-spacing:.06em; }
+      nav { display:flex; gap:6px; flex:none; }
+      nav a { margin:0; padding:7px 10px; font-size:13px; }
+      #scale-wrapper { width:100% !important; margin:0 !important; transform:none !important; zoom:1 !important; }
+      #scale-wrapper main { width:100% !important; max-width:none; margin:0; padding:12px; }
+
+      /* Welcome: image is a compact banner ABOVE the message, never dropped below it. */
+      .welcome { width:100%; min-height:0; margin:8px auto 10px; padding:0; display:flex; flex-direction:column; gap:0; border-radius:18px; }
+      .welcome-video-wrap { order:-1; width:100%; height:clamp(145px, 43vw, 205px); min-height:0; max-height:none; aspect-ratio:auto; border:0; border-radius:17px 17px 0 0; box-shadow:none; }
+      .welcome-video-wrap img { object-position:center 52%; }
+      .welcome-copy { padding:20px 18px 22px; }
+      .welcome-kicker { font-size:10px; letter-spacing:.14em; margin-bottom:10px; }
+      .welcome-title { max-width:none; font-size:clamp(48px, 13vw, 68px); line-height:.9; }
+      .welcome-description { max-width:none; font-size:14px; line-height:1.5; margin:14px 0 18px; }
+      .start-order { width:100%; min-width:0; min-height:54px; padding:13px 18px; font-size:17px; }
+      .start-order.trk { margin-top:9px; }
+      .welcome-note { margin-top:10px; font-size:10px; }
+      .welcome-footer { margin:0 auto 10px; padding:0 4px; font-size:9px; }
+
+      /* Customer menu fills the phone width with two readable product cards. */
+      .hero { padding:17px 15px; border-radius:14px; gap:10px; margin-bottom:8px; }
+      .hero h2 { font-size:clamp(25px, 7vw, 34px); }
+      .hero p { font-size:12px; line-height:1.4; }
+      .hero .hero-badge { width:66px; height:66px; border-radius:12px; }
+      .chips { top:calc(55px + env(safe-area-inset-top,0px)); flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:7px; padding:9px 0; scrollbar-width:none; }
+      .chips::-webkit-scrollbar { display:none; }
+      .chips button { flex:none; padding:7px 12px; font-size:12px; }
+      .chips .srch { flex:1 0 145px; min-width:145px; }
+      .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+      .cat { font-size:25px; margin:15px 0 8px; }
+      .item { min-width:0; border-radius:12px; padding-bottom:9px; }
+      .item .art { height:clamp(112px, 34vw, 145px); display:grid; place-items:center; overflow:hidden; }
+      .item .art svg { width:100%; height:100%; object-fit:contain; }
+      .item b { font-size:12px; padding:0 8px; min-height:29px; }
+      .pr { padding:0 8px; gap:4px; }
+      .pr span { font-size:17px; }
+      .pr em { font-size:10px; padding:3px 7px; }
+      .dts { padding:0 8px; }
+      .dietbar { gap:6px; }
+      .dietbar .op { padding:7px 10px; font-size:12px; }
+      #to-cart, #to-cart-bar { font-size:13px; }
+
+      /* Checkout is a normal full-width page on a phone, not a tiny scaled desktop card. */
+      .cart { width:100%; padding:13px; border-radius:14px; }
+      .cart h2 { font-size:25px; }
+      .cart .row { font-size:13px; }
+      .pms { gap:7px; }
+      .pm { padding:9px; font-size:13px; }
+      .place { position:sticky !important; bottom:0; z-index:6; padding:10px 0 max(8px, env(safe-area-inset-bottom)); background:linear-gradient(transparent,var(--card) 22%); }
+      .place .btn { box-shadow:0 5px 20px #0008; }
+
+      /* Customization remains full-size and scrolls inside the sheet when necessary. */
+      .ov { align-items:center; padding:12px; overflow-y:auto; }
+      .sheet { width:min(540px, calc(100vw - 24px)); max-width:100%; max-height:calc(100dvh - 24px); overflow-y:auto; padding:14px; border-radius:17px; }
+      .sh { padding-right:28px; }
+      .art2 { width:76px; }
+      .bar { position:sticky; bottom:-14px; padding:10px 0 max(8px, env(safe-area-inset-bottom)); background:var(--card); }
+      .bar .btn { font-size:14px; padding:11px 8px; }
+
+      /* iPad portrait staff dashboard: use the screen instead of scaling all text down. */
+      .cols { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      .stat { min-width:0; padding:9px 11px; }
+      .stat b { font-size:25px; }
+      .tabs { flex-wrap:nowrap; overflow-x:auto; padding-bottom:5px; scrollbar-width:thin; }
+      .tabs button { flex:none; padding:8px 12px; font-size:13px; }
+      .g2 { grid-template-columns:1fr; }
+      .hb { grid-template-columns:95px minmax(40px,1fr) 55px; }
+      .box { padding:11px; }
+    }
+    @media (max-width: 520px) {
+      .cols { grid-template-columns:1fr; }
+      .welcome-copy { padding:17px 15px 19px; }
+      .welcome-title { font-size:clamp(46px, 12.5vw, 60px); }
+      .hero .hero-badge { width:58px; height:58px; }
+      .grid { gap:8px; }
+      .item .art { height:clamp(105px, 32vw, 132px); }
+      .tot { font-size:20px; }
+      .ord { padding:10px; }
+    }
+
+    </style>
+
 </head>
 <body>
 
   <!-- ================= MARKUP ================= -->
   <header>
-    <div><h1>H-HOOD CAFE</h1><small id="sub"></small></div>
-    <nav><a href="#order" id="n1">Order</a><a href="#admin" id="n2">Staff</a></nav>
+    <div class="hdr-in">
+      <div><h1>H-HOOD CAFE</h1><small id="sub"></small></div>
+      <nav><a href="#order" id="n1">Order</a><a href="#admin" id="n2">Staff</a><a href="#cashier" id="n3">Cashier</a></nav>
+    </div>
   </header>
-  <main id="app"></main>
+  <div id="scale-wrapper">
+    <main id="app"></main>
+  </div>
   <div id="modal"></div>
+  <div id="sr" class="sr" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- ================= SCRIPT ================= -->
-  <script>
+  <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDM010l-4dzIgvlpgiSLetO_H3e6sZJd3k",
+      authDomain: "cafe-app-c8239.firebaseapp.com",
+      databaseURL: "https://cafe-app-c8239-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cafe-app-c8239",
+      storageBucket: "cafe-app-c8239.firebasestorage.app",
+      messagingSenderId: "808921735084",
+      appId: "1:808921735084:web:d0a6d1f00ab9304f69e409"
+    };
+
+    const fbApp = initializeApp(firebaseConfig);
+    const rtdb = getDatabase(fbApp);
+
+    // Lightweight RTDB adapter matching the app's existing collection calls
+    function makeRtdbColl(path) {
+      const baseRef = ref(rtdb, path);
+      return {
+        doc(id) {
+          const safeId = String(id).replace(/[.#$\[\]/]/g, "_");
+          const itemRef = ref(rtdb, path + "/" + safeId);
+          return {
+            set(data) { return set(itemRef, data); },
+            update(data) { return update(itemRef, data); },
+            delete() { return remove(itemRef); }
+          };
+        },
+        onSnapshot(cb, errCb) {
+          onValue(baseRef, (snap) => {
+            const val = snap.val() || {};
+            const docs = Object.values(val).map((item) => ({ data: () => item }));
+            cb({ docs });
+          }, errCb);
+        },
+        orderBy() { return this; },
+        limit() { return this; }
+      };
+    }
+
+    // --- Universal Proportional Viewport Scaler ---
+    // The app is always laid out at its full 1150px design width and then scaled to the window,
+    // so the Landing, Order and Staff pages look exactly the same on a small floating laptop window,
+    // a tablet, an iPhone or an Android phone. Nothing stacks or drops to the bottom.
+    //  - Landing page : scaled to fit BOTH width and height, so the whole screen is always visible (no scrolling).
+    //  - Order / Staff: scaled to fit the width (these pages are long, so they scroll vertically as normal).
+    // CSS `zoom` is used (instead of transform) so sticky bars and the header keep working while scaled.
+    const DESIGN_W = 1150;
+    const USE_ZOOM = typeof CSS !== "undefined" && CSS.supports && CSS.supports("zoom", "1");
+    let curScale = 1;
+
+    let lastView = null;
+    function viewSize() {
+      const de = document.documentElement, cs = getComputedStyle(de), a = document.activeElement;
+      const typing = a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA");
+      // An on-screen keyboard only changes the window HEIGHT: while typing, keep the last height so the page doesn't shrink
+      if (typing && lastView && window.innerWidth === lastView.iw) return lastView;
+      const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+      lastView = { iw: window.innerWidth, w: de.clientWidth || window.innerWidth, h: (window.innerHeight || de.clientHeight) - pad };
+      return lastView;
+    }
+    let fitState = { fit: false, h: 0 };
+    function scaleApp() {
+      scaleCore();
+      centerFit();
+    }
+    // Fit-to-window pages are centred vertically in the space under the header, so a tall phone screen
+    // does not leave an empty gap at the bottom (nothing about the layout changes, only the position).
+    function centerFit() {
+      const wrap = document.getElementById("scale-wrapper"), bar = document.querySelector("header");
+      if (!wrap || !bar) return;
+      let mt = 0;
+      if (fitState.fit) {
+        const used = bar.getBoundingClientRect().height + wrap.getBoundingClientRect().height;
+        mt = Math.max(0, (fitState.h - used) / 2);
+      }
+      wrap.style.marginTop = (USE_ZOOM ? mt / curScale : mt) + "px";
+    }
+    function scaleCore() {
+      const wrap = document.getElementById("scale-wrapper"), hdr = document.querySelector(".hdr-in"), bar = document.querySelector("header");
+      if (!wrap || !hdr) return;
+      const de = document.documentElement;
+      const { w, h } = viewSize();
+      // Phones and portrait iPads use the responsive CSS above; do not apply desktop zoom.
+      if (w <= 820) {
+        de.classList.remove("fit");
+        de.style.setProperty("--dw", "100%");
+        wrap.dataset.dw = "100%";
+        wrap.dataset.scaled = "responsive";
+        wrap.style.zoom = "1";
+        hdr.style.zoom = "1";
+        wrap.style.transform = "none";
+        hdr.style.transform = "none";
+        wrap.style.marginLeft = "0";
+        hdr.style.marginLeft = "0";
+        wrap.style.marginTop = "0";
+        document.body.style.height = "auto";
+        fitState = { fit: false, h };
+        curScale = 1;
+        return;
+      }
+      const cartPage = !!wrap.querySelector("#cart, .cart.ok");
+      // Fit-to-window pages (never scroll): welcome screen, checkout / place order, order tracking
+      const fit = !!wrap.querySelector(".welcome") || cartPage;
+      // The design never changes: same layout on every device, only scaled. (Checkout/tracking is a narrow card, so it uses a narrower design width.)
+      const dw = cartPage ? 680 : DESIGN_W;
+      de.classList.toggle("fit", fit);
+      fitState = { fit, h };
+      if (wrap.dataset.dw !== String(dw)) { de.style.setProperty("--dw", dw + "px"); wrap.dataset.dw = String(dw); delete wrap.dataset.scaled; }
+      const sw = Math.min(1, w / dw);
+      let sh = Infinity;
+      if (fit) {
+        // Full height at 100% size (the header's 2px border does not scale)
+        const natural = (bar.getBoundingClientRect().height - 2 + wrap.getBoundingClientRect().height) / curScale + 2;
+        if (natural > 0) sh = (h - 3) / natural;
+      }
+      let s = Math.min(sw, sh);
+      // Layout rounding differs slightly between zoom levels, so when the height is the limit only grow by a clear
+      // margin (shrinking is always allowed): this stops the page from flickering between two nearly equal sizes.
+      if (sh < sw && wrap.dataset.scaled && s > curScale && s < curScale * 1.02) return;
+      s = Math.max(0.1, s);
+      if (Math.abs(s - curScale) < 0.0005 && wrap.dataset.scaled) return;
+      curScale = s;
+      wrap.dataset.scaled = "1";
+      if (USE_ZOOM) {
+        wrap.style.zoom = hdr.style.zoom = String(s);
+      } else {
+        // Fallback for very old browsers without CSS zoom
+        const t = s < 1 ? `scale(${s})` : "none", ml = Math.max(0, (w - dw * s) / 2) + "px";
+        wrap.style.transform = hdr.style.transform = t;
+        wrap.style.marginLeft = hdr.style.marginLeft = ml;
+        requestAnimationFrame(() => {
+          bar.style.height = Math.floor(hdr.getBoundingClientRect().height) + 2 + "px";
+          document.body.style.height = Math.floor(wrap.getBoundingClientRect().height + bar.getBoundingClientRect().height) + "px";
+        });
+      }
+    }
+
+    // --- Customize sheet: scale it to fit the window (no scrollbar, nothing pushed to the bottom) ---
+    function fitSheet() {
+      const sheet = document.querySelector(".sheet"), ov = document.querySelector(".ov");
+      if (!sheet || !ov) return;
+      if (window.innerWidth <= 820) {
+        sheet.style.transform = "none";
+        sheet.classList.add("fitted");
+        return;
+      }
+      const pad = 12, nw = sheet.offsetWidth, nh = sheet.offsetHeight;
+      if (!nw || !nh) return;
+      const s = Math.min(1, (ov.clientWidth - pad * 2) / nw, (ov.clientHeight - pad * 2) / nh);
+      sheet.style.transform = s < 1 ? `scale(${Math.max(0.1, s)})` : "none";
+      sheet.classList.add("fitted");
+    }
+
+    let lastVW = 0;
+    function refit() {
+      scaleApp();
+      // An on-screen keyboard only changes the window HEIGHT. If the user is typing in the sheet and the
+      // width is unchanged, keep the sheet at its current size instead of shrinking it to the keyboard gap.
+      const a = document.activeElement, typing = a && a.closest && a.closest(".sheet") && a.tagName === "INPUT";
+      if (!(typing && window.innerWidth === lastVW)) fitSheet();
+      lastVW = window.innerWidth;
+    }
+    window.addEventListener("resize", refit);
+    window.addEventListener("orientationchange", () => setTimeout(refit, 150));
+    window.addEventListener("DOMContentLoaded", refit);
+    const resizeObs = new ResizeObserver(() => scaleApp());
+    window.addEventListener("load", () => {
+      const wrap = document.getElementById("scale-wrapper");
+      if (wrap) resizeObs.observe(wrap);
+      const hi = document.querySelector(".hdr-in"); if (hi) resizeObs.observe(hi);
+      refit();
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    // -----------------------------------
+
+    
+    
+
     // H-HOOD CAFE: ordering + staff app
 
     // Register Service Worker for PWA / offline support
@@ -967,10 +1494,12 @@
     let GCASH = { no: "0917 000 0000", name: "H-HOOD CAFE", qr: "" };
     const okQr = (q) => typeof q === "string" && q.indexOf("data:image/") === 0 ? q : "";
     let setColl = null;
-    let pay = "Cash", gref = "";
+    let pay = "Cash", gref = "", discountType = "None", discountName = "", discountId = "";
+    let TAX = { vatRegistered: false, registeredName: "H-HOOD CAFE", tin: "", address: "" };
     function saveGcash(p) {
       GCASH = { ...GCASH, ...p }; GCASH.qr = okQr(GCASH.qr);
       if (setColl) setColl.doc("gcash").set({ k: "gcash", ...GCASH }).catch(console.error);
+      else lsSet("hhoodGcash", JSON.stringify(GCASH));
       render();
     }
     const payTag = (o) => o.pay === "GCash" ? "\u{1F4F1} GCash" + (o.verified ? " \u2713 verified" : " \xB7 ref " + esc(o.ref)) : "\u{1F4B5} Cash";
@@ -984,7 +1513,7 @@
     function setIng(k, stock, cost) {
       const r = { k, stock: Math.max(0, Math.round(+stock) || 0), cost: cost != null ? cost : iCost(k) };
       if (ingColl) ingColl.doc(k).set(r).catch(console.error);
-      else { ing[k] = r; render(); }
+      else { ing[k] = r; lsSet("hhoodIng", JSON.stringify(ing)); render(); }
     }
     function useIngredients(o) {
       const t = {};
@@ -995,11 +1524,11 @@
       const w = { id: "w" + Date.now(), t: Date.now(), k, qty, why, cost: qty * iCost(k) };
       if (ing[k]) setIng(k, ing[k].stock - qty);
       if (wasteColl) wasteColl.doc(w.id).set(w).catch(console.error);
-      else { waste.unshift(w); render(); }
+      else { waste.unshift(w); lsSet("hhoodWaste", JSON.stringify(waste)); render(); }
     }
     // ---- Loyalty: 1 stamp per cup (named orders), 8 stamps = 1 free drink
     const lk = (n) => (n || "").trim().toLowerCase();
-    const saveLoy = (r) => { if (loyColl) loyColl.doc(r.k.replace(/[^a-z0-9]+/g, "-") || "x").set(r).catch(console.error); else render(); };
+    const saveLoy = (r) => { if (loyColl) loyColl.doc(r.k.replace(/[^a-z0-9]+/g, "-") || "x").set(r).catch(console.error); else { lsSet("hhoodLoy", JSON.stringify(loy)); render(); } };
     const canRedeem = (o) => { const r = loy[lk(o.name)]; return r && r.stamps >= 8 && !o.reward; };
     function earn(o) {
       const k = lk(o.name); if (!k) return;
@@ -1011,7 +1540,7 @@
       if (!o || !canRedeem(o)) return;
       const r = loy[lk(o.name)], off = Math.min(...o.items.map(unit));
       r.stamps -= 8; o.reward = off; o.total = Math.max(0, o.total - off); saveLoy(r);
-      if (coll) coll.doc(o.id).update({ total: o.total, reward: off }); else render();
+      if (coll) coll.doc(o.id).update({ total: o.total, reward: off }); else save(o);
     }
 
     // Debounce Utility
@@ -1023,11 +1552,115 @@
       };
     }
 
+
+    // ============================================================
+    // 2b. EXTRAS: announcements, sound, masks, favorites, diet tags, tracker, printing
+    // ============================================================
+
+    let sayT;
+    const say = (m) => { const r = $("#sr"); if (!r) return; r.textContent = ""; clearTimeout(sayT); sayT = setTimeout(() => { r.textContent = m; }, 60); };
+    const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+    const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (_) {} };
+
+    // ---- Input masks (GCash reference = 13 digits as 4-3-6; mobile = 11 digits as 4-3-4)
+    const GREF_LEN = 13;
+    const maskDigits = (v, pat) => { const d = v.replace(/\D/g, ""); let o = "", i = 0; for (const n of pat) { if (i >= d.length) break; o += d.slice(i, i + n); i += n; if (i < d.length) o += " "; } return o.trim(); };
+    const gok = () => gref.replace(/\D/g, "").length === GREF_LEN;
+    function onGref(el) { el.value = maskDigits(el.value, [4, 3, 6]); gref = el.value; const p = $("#place"); if (p) p.disabled = !(cart.length && gok()); }
+
+    // ---- New-order chime (Web Audio) with a staff on/off toggle
+    let AC = null, soundOn = lsGet("hhoodSnd") !== "0", seen = null, lastSt = "", dietF = "", lastN = "";
+    document.addEventListener("pointerdown", () => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (_) {} });
+    function chime() {
+      if (!soundOn || !AC) return;
+      try { [[880, 0], [1175, 0.16]].forEach(([f, d]) => { const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + d; o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.4); }); } catch (_) {}
+    }
+    function watchOrders() {
+      if (seen === null) { seen = new Set(orders.map((o) => o.id)); return; }
+      const add = orders.filter((o) => o.status === "new" && !seen.has(o.id));
+      orders.forEach((o) => seen.add(o.id));
+      if (!add.length) return;
+      const gc = add.filter((o) => o.pay === "GCash" && !o.verified).length;
+      chime();
+      say(add.length > 1 ? add.length + " new orders" + (gc ? ", " + gc + " need GCash verification" : "") : "New order #" + add[0].no + (gc ? ", GCash needs verification" : ""));
+    }
+
+    // ---- Dietary tags. EDIT these to match your real recipes; unlisted drinks default to "has dairy".
+    const DT = { df: "\u{1F33F} Dairy-free", vg: "\u{1F331} Vegan", cf: "\u{1F6AB} Caffeine-free", dy: "\u{1F95B} Has dairy" };
+    const DIET = { Americano: ["df", "vg"], "Green Apple": ["df", "vg", "cf"], Blueberry: ["df", "vg", "cf"], "Mixed Berries": ["df", "vg", "cf"], "Ice Tea with Calamansi": ["df", "vg"] };
+    const dietOf = (n) => DIET[n] || ["dy"];
+    const dts = (n) => `<div class="dts">${dietOf(n).map((k) => `<span class="dt${k === "dy" ? " dy" : ""}">${DT[k]}</span>`).join("")}</div>`;
+    const dietBar = () => `<div class="dietbar" role="group" aria-label="Dietary filters">${[["df", "Dairy-free"], ["vg", "Vegan-friendly"], ["cf", "Caffeine-free"]].map(([k, l]) => `<button class="op" data-df="${k}" aria-pressed="${dietF === k}">${l}</button>`).join("")}</div><p class="m" style="margin:2px 0 0">Dietary tags are a guide. Please tell staff about any allergies.</p>`;
+
+    // ---- Favorites ("My usuals"), saved per device in localStorage
+    const PR = {}; ALL.forEach((x) => PR[x.n] = x.p);
+    let favs = []; try { favs = (JSON.parse(lsGet("hhoodFavs")) || []).filter((f) => f && catOf[f.n]); } catch (_) {}
+    const favSave = () => lsSet("hhoodFavs", JSON.stringify(favs));
+    const mkLine = (s) => { const ch = ADDONS.filter((a) => a.c.includes(catOf[s.n]) && (s.add || []).includes(a.id)); return { n: s.n, p: PR[s.n], ap: ch.reduce((x, a) => x + a.p, 0), q: s.q || 1, serve: s.serve, sugar: s.sugar, add: ch.map((a) => a.n), note: (s.note || "").trim() }; };
+    const addLine = (l) => { const key = JSON.stringify([l.n, l.serve, l.sugar, l.add, l.note]), ex = cart.find((c) => c.key === key); ex ? ex.q += l.q : cart.push({ ...l, key }); };
+    const favOf = (s) => ({ n: s.n, serve: s.serve, sugar: s.sugar, add: ADDONS.filter((a) => a.c.includes(catOf[s.n]) && s.add.includes(a.id)).map((a) => a.id), note: (s.note || "").trim() });
+    const isFav = (s) => favs.some((x) => JSON.stringify(x) === JSON.stringify(favOf(s)));
+    function favsHTML() {
+      if (!favs.length) return "";
+      return `<section class="favs" aria-label="My usuals"><h2 class="cat">My usuals</h2>${favs.map((f, i) => { const l = mkLine(f); return `<div class="row"><div><b>${esc(f.n)}</b><div class="m">${lineDesc(l)}</div></div><button class="btn s" data-fa="${i}" ${out(f.n) ? "disabled" : ""}>ADD ${peso(unit(l))}</button><button class="btn s gh" data-fr="${i}" aria-label="Remove ${esc(f.n)} from my usuals">\u2715</button></div>`; }).join("")}</section>`;
+    }
+
+    // ---- Order tracking (persists on this device for 6 hours)
+    const tkGet = () => { try { const o = JSON.parse(lsGet("hhoodTrack")); return o && Date.now() - o.t < 216e5 ? o : null; } catch (_) { return null; } };
+    const tkSet = (o) => lsSet("hhoodTrack", o ? JSON.stringify(o) : null);
+    function renderTrack() {
+      const live = orders.find((x) => x.id === done.id) || done, st = live.status || "new", steps = ["Order received", "Preparing your drink", "Ready for pickup"];
+      const idx = ({ new: 0, preparing: 1, ready: 2, done: 3 })[st] ?? 0, gw = live.pay === "GCash" && !live.verified && st === "new";
+      const msg = st === "cancelled" ? "This order was cancelled. Please ask the staff for help." : ({ new: gw ? "Waiting for staff to confirm your GCash payment." : "We've got your order. Staff will start it shortly.", preparing: "Your drink is being made.", ready: "Your order is ready! Please pick it up at the counter.", done: "Picked up. Enjoy your drink!" })[st];
+      if (lastSt !== st) { lastSt = st; say("Order #" + live.no + ": " + msg); }
+      if (st === "done" || st === "cancelled") tkSet(null);
+      $("#app").innerHTML = `<div class="cart ok" style="max-width:420px;margin:30px auto;position:static;max-height:none;overflow:visible"><div style="font-size:60px" aria-hidden="true">\u{1F430}\u2615</div><p class="m">YOUR ORDER NUMBER</p><div class="no">#${esc(live.no)}</div><p>Thanks${live.name ? ", " + esc(live.name) : ""}! (${esc(live.type)}) ${live.pay === "GCash" ? "Your GCash reference was received." : "Please pay at the counter."}</p>${st === "cancelled" ? "" : `<ol class="tl" aria-label="Order progress">${steps.map((s, k) => `<li class="${idx > k ? "on" : ""}${idx === k ? " cur" : ""}"${idx === k ? ' aria-current="step"' : ""}><i aria-hidden="true">${idx > k ? "\u2713" : k + 1}</i>${s}</li>`).join("")}</ol>`}<p><b>${msg}</b></p><p class="m">Amount due ${peso(live.amountDue != null ? live.amountDue : taxBreakdown(live).net)} \xB7 ${payTag(live)}</p>${live.paid || (live.pay === "GCash" && live.verified) ? `<button class="btn" data-receipt="${live.id}">VIEW / PRINT PAYMENT RECEIPT</button>` : ""}<button class="btn" id="back-home">BACK TO HOME</button></div>`;
+    }
+
+    // ---- Batch prep scaler (Ingredients tab)
+    let batch = { c: CF, n: 10 };
+    const fmtU = (q, u) => (u === "g" || u === "ml") && q >= 1000 ? (q / 1000).toFixed(2) + (u === "g" ? " kg" : " L") : Math.round(q * 10) / 10 + " " + u;
+    function batchOut() {
+      const n = Math.max(0, +batch.n || 0), r = RECIPES[batch.c] || {};
+      return `<table><tr><th>INGREDIENT</th><th class="n">PER CUP</th><th class="n">FOR ${n} CUPS</th><th class="n">COST</th></tr>${Object.entries(r).map(([k, q]) => `<tr><td>${ING[k].n}</td><td class="n">${fmtU(q, ING[k].u)}</td><td class="n"><b>${fmtU(q * n, ING[k].u)}</b></td><td class="n">${peso(q * n * iCost(k))}</td></tr>`).join("")}</table>`;
+    }
+    const batchBox = () => `<div class="box"><h3>Batch prep scaler</h3><p class="m">Scale a recipe for bulk prep, like a big batch of fruit tea syrup or milk base.</p><div class="opts" style="align-items:center"><label class="m" for="bc">Category</label><select id="bc">${MENU.map(([c]) => `<option ${c === batch.c ? "selected" : ""}>${c}</option>`).join("")}</select><label class="m" for="bn">Cups</label><input id="bn" class="sm" type="number" min="1" max="999" value="${batch.n}">${[5, 10, 20, 50].map((x) => `<button class="op" data-bn="${x}">\xD7${x}</button>`).join("")}</div><div id="bout" aria-live="polite" style="margin-top:8px">${batchOut()}</div></div>`;
+
+    // ---- Print a kitchen / counter ticket (see @media print)
+    function printTicket(id) {
+      const o = orders.find((x) => x.id === id); if (!o) return;
+      let t = document.getElementById("ticket"); if (!t) { t = document.createElement("div"); t.id = "ticket"; document.body.appendChild(t); }
+      t.innerHTML = `<h2>H-HOOD CAFE</h2><div class="tn">#${esc(o.no)}</div><p>${esc(o.name || "Guest")}${o.table ? " \xB7 Table " + esc(o.table) : ""}<br>${esc(o.type || "")} \xB7 ${new Date(o.t).toLocaleString([], { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" })}<br>${payTag(o).replace(/[^\x20-\x7E]/g, "").trim()}</p><hr>${o.items.map((i) => `<div><b>${i.q}x ${esc(i.n)}</b><br><small>${lineDesc(i)}</small></div>`).join("")}<hr><p><b>TOTAL ${peso(o.total)}</b></p>`;
+      try { window.print(); } catch (_) {}
+    }
+    const ptBtn = (o) => `<button class="btn s gh" data-pt="${o.id}">\u{1F5A8} PRINT</button>`;
+
     // ============================================================
     // 3. STATE
     // ============================================================
 
     let cart = [], sel = null, otype = "Dine-in", qs = "", orders = [], coll = null, done = null, authed = false, local = [], inv = {}, invColl = null, tab = "orders", range = "7", demo = false, dOrders = [], dInv = {}, isSubmitting = false;
+    try { local = JSON.parse(lsGet("hhoodOrders")) || []; orders = local; } catch(e){}
+    try { inv = JSON.parse(lsGet("hhoodInv")) || {}; } catch(e){}
+    try { ing = JSON.parse(lsGet("hhoodIng")) || {}; } catch(e){}
+    try { waste = JSON.parse(lsGet("hhoodWaste")) || []; } catch(e){}
+    try { loy = JSON.parse(lsGet("hhoodLoy")) || {}; } catch(e){}
+    try { let g = JSON.parse(lsGet("hhoodGcash")); if (g) GCASH = {...GCASH, ...g}; } catch(e){}
+    try { let tx = JSON.parse(lsGet("hhoodTax")); if (tx) TAX = {...TAX, ...tx}; } catch(e){}
+    
+    window.addEventListener('storage', (e) => {
+      try {
+        if (e.key === 'hhoodOrders') { local = JSON.parse(e.newValue) || []; orders = local; }
+        if (e.key === 'hhoodInv') inv = JSON.parse(e.newValue) || {};
+        if (e.key === 'hhoodIng') ing = JSON.parse(e.newValue) || {};
+        if (e.key === 'hhoodWaste') waste = JSON.parse(e.newValue) || [];
+        if (e.key === 'hhoodLoy') loy = JSON.parse(e.newValue) || {};
+        if (e.key === 'hhoodGcash') GCASH = {...GCASH, ...(JSON.parse(e.newValue)||{})};
+        if (e.key === 'hhoodTax') TAX = {...TAX, ...(JSON.parse(e.newValue)||{})};
+        if (view() !== 'order' || done) render();
+      } catch(_) {}
+    });
+
     const out = (n) => inv[n] && inv[n].stock <= 0 || ingOut(n), dk = (t) => new Date(t).toLocaleDateString("en-CA"), ds = (d) => new Date(d).toLocaleDateString([], { weekday: "short", day: "numeric" });
     const getInv = () => demo ? dInv : inv, getDone = () => (demo ? dOrders : orders).filter((o) => o.status === "done");
 
@@ -1134,13 +1767,16 @@
       } else if (invColl) invColl.doc(n.toLowerCase().replace(/[^a-z0-9]+/g, "-")).set(r).catch(console.error);
       else {
         inv[n] = r;
+        lsSet("hhoodInv", JSON.stringify(inv));
         render();
       }
     }
     function save(o) {
       if (coll) return coll.doc(o.id).set(o).catch(console.error);
-      local.unshift(o);
+      const idx = local.findIndex(x => x.id === o.id);
+      if (idx >= 0) local[idx] = o; else local.unshift(o);
       orders = local;
+      lsSet("hhoodOrders", JSON.stringify(local));
       render();
       return Promise.resolve();
     }
@@ -1216,11 +1852,85 @@
     // 6. ROUTING & RENDER ENTRY
     // ============================================================
 
-    const view = () => /^#(admin|staff)/.test(location.hash) ? "admin" : "order";
+    const view = () => /^#cashier/.test(location.hash) ? "cashier" : /^#(admin|staff)/.test(location.hash) ? "admin" : "order";
     // Always show the welcome kiosk screen on a fresh customer visit, regardless of any old URL fragment.
     // The customer enters the menu by pressing START ORDERING or the Order navigation link.
-    let landingStarted = false;
+    let landingStarted = false, orderStep = 'menu';
+    // The coffee intro is a separate customer-only experience; it never touches order data or staff screens.
+    let coffeeIntroFinished = false, coffeeIntroTimer = null;
+    function finishCoffeeIntro() {
+      if (coffeeIntroFinished) return;
+      coffeeIntroFinished = true;
+      if (coffeeIntroTimer) { clearTimeout(coffeeIntroTimer); coffeeIntroTimer = null; }
+      render();
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+    function updateCoffeeIntro() {
+      const intro = document.querySelector(".coffee-intro");
+      if (!intro) return;
+      const rect = intro.getBoundingClientRect();
+      const distance = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / distance));
+      intro.style.setProperty("--p", progress.toFixed(4));
+      const stages = [
+        [0.10, "01 / Caramel syrup"], [0.28, "02 / Fresh espresso"],
+        [0.43, "03 / Silky milk"], [0.59, "04 / Ice, drop by drop"],
+        [0.74, "05 / Caramel drizzle"], [0.87, "06 / Seal the moment"]
+      ];
+      let label = "A 16oz cup. A little anticipation.";
+      for (const [at, name] of stages) if (progress >= at) label = name;
+      const step = intro.querySelector(".coffee-step");
+      if (step) step.textContent = progress >= .98 ? "Your iced caramel macchiato is ready" : label;
+      const fill = intro.querySelector(".coffee-progress-track i");
+      if (fill) fill.style.width = (progress * 100) + "%";
+      const streams = intro.querySelectorAll(".coffee-stream");
+      const windowFade = (p, start, end) => Math.max(0, Math.min(1, (p - start) * 12)) * Math.max(0, Math.min(1, (end - p) * 12));
+      if (streams[0]) streams[0].style.opacity = windowFade(progress, .10, .28);
+      if (streams[1]) streams[1].style.opacity = windowFade(progress, .29, .43);
+      if (streams[2]) streams[2].style.opacity = windowFade(progress, .44, .59);
+      if (progress >= .998 && !coffeeIntroFinished && !coffeeIntroTimer) {
+        coffeeIntroTimer = setTimeout(finishCoffeeIntro, 850);
+      } else if (progress < .96 && coffeeIntroTimer) {
+        clearTimeout(coffeeIntroTimer); coffeeIntroTimer = null;
+      }
+    }
+    function renderCoffeeIntro() {
+      const app = $("#app");
+      if (app.dataset.coffeeIntro === "1") { updateCoffeeIntro(); return; }
+      app.dataset.coffeeIntro = "1";
+      app.innerHTML = `
+        <section class="coffee-intro" aria-label="Scroll through making an iced caramel macchiato">
+          <button class="coffee-skip" id="skip-coffee-intro" type="button">SKIP INTRO ↗</button>
+          <div class="coffee-sticky">
+            <div class="coffee-copy">
+              <div class="coffee-eyebrow">H-HOOD CAFE · MADE FRESH</div>
+              <h2 class="coffee-headline">A little craft.<span>A lot of comfort.</span></h2>
+              <div class="coffee-step">A 16oz cup. A little anticipation.</div>
+              <p class="coffee-desc">Scroll slowly and watch your iced caramel macchiato come together, one beautiful layer at a time.</p>
+              <div class="coffee-progress"><span>THE MAKING</span><span class="coffee-progress-track"><i></i></span><span>READY</span></div>
+            </div>
+            <div class="coffee-scene" aria-hidden="true">
+              <div class="coffee-glow"></div>
+              <div class="coffee-cup-wrap">
+                <div class="coffee-stream syrup"></div><div class="coffee-stream espresso"></div><div class="coffee-stream milk"></div>
+                <div class="coffee-cup">
+                  <div class="coffee-liquid coffee-syrup"></div>
+                  <div class="coffee-liquid coffee-espresso"></div>
+                  <div class="coffee-liquid coffee-milk"></div>
+                  <div class="coffee-ice"><i></i><i></i><i></i><i></i></div>
+                  <div class="coffee-drizzle"><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="coffee-lid"></div>
+                <div class="coffee-cup-shadow"></div>
+              </div>
+            </div>
+          </div>
+          <div class="coffee-scrollhint">SCROLL TO BUILD YOUR DRINK ↓</div>
+        </section>`;
+      updateCoffeeIntro();
+    }
     function renderLanding() {
+      $("#app").dataset.coffeeIntro = "0";
       $("#app").innerHTML = `
         <section class="welcome" aria-label="H-HOOD CAFE welcome screen">
           <div class="welcome-copy">
@@ -1228,6 +1938,7 @@
             <h2 class="welcome-title">Your coffee.<span>Your moment.</span></h2>
             <p class="welcome-description">Freshly brewed coffee, creamy milk, and your favorite flavors — made just the way you like it. Take a look behind the bar, then start your order.</p>
             <button class="start-order" id="start-order" type="button">START ORDERING <span aria-hidden="true">→</span></button>
+            ${tkGet() ? `<button class="start-order trk" id="track-order" type="button">TRACK MY ORDER #${esc(tkGet().no)}</button>` : ""}
             <div class="welcome-note">Tap to explore the menu and customize your drink</div>
           </div>
           <div class="welcome-video-wrap">
@@ -1241,10 +1952,14 @@
     function render() {
       $("#n1").className = view() === "order" && landingStarted ? "on" : "";
       $("#n2").className = view() === "admin" ? "on" : "";
-      $("#sub").textContent = view() === "admin" ? "STAFF \xB7 BARISTA / CASHIER" : landingStarted ? "FRESH BREWS \xB7 GOOD VIBES" : "WELCOME · YOUR COFFEE EXPERIENCE STARTS HERE";
+      $("#n3").className = view() === "cashier" ? "on" : "";
+      $("#sub").textContent = view() === "admin" ? "STAFF \xB7 BARISTA" : view() === "cashier" ? "CASHIER \xB7 ORDERS & PAYMENTS" : landingStarted ? "FRESH BREWS \xB7 GOOD VIBES" : "WELCOME · YOUR COFFEE EXPERIENCE STARTS HERE";
       if (view() === "admin") renderAdmin();
+      else if (view() === "cashier") { if (!authed) renderAdmin(); else { watchOrders(); renderCashier(); } }
       else if (landingStarted) renderOrder();
+      else if (!coffeeIntroFinished) renderCoffeeIntro();
       else renderLanding();
+      scaleApp();
     }
 
     // ============================================================
@@ -1257,14 +1972,15 @@
       const f = qs.trim().toLowerCase();
       let h = "";
       MENU.forEach(([c, its], i) => {
-        const l = its.filter(([n]) => n.toLowerCase().includes(f));
+        const l = its.filter(([n]) => n.toLowerCase().includes(f) && (!dietF || dietOf(n).includes(dietF)));
         if (!l.length) return;
-        h += `<h2 class="cat" id="c${i}">${c}</h2><div class="grid">${l.map(([n, p]) => `<button class="item" data-n="${n}" data-p="${p}" ${out(n) ? "disabled" : ""}><div class="art">${art(n)}</div><b>${n}</b><div class="pr"><span>${peso(p)}</span><em>CUSTOMIZE</em></div>${out(n) ? "<small>SOLD OUT</small>" : ""}${cq(n) ? `<i class="bd">${cq(n)}</i>` : ""}</button>`).join("")}</div>`;
+        h += `<h2 class="cat" id="c${i}">${c}</h2><div class="grid">${l.map(([n, p]) => `<button class="item" data-n="${n}" data-p="${p}" ${out(n) ? "disabled" : ""}><div class="art">${art(n)}</div><b>${n}</b><div class="pr"><span>${peso(p)}</span><em>CUSTOMIZE</em></div>${dts(n)}${out(n) ? "<small>SOLD OUT</small>" : ""}${cq(n) ? `<i class="bd">${cq(n)}</i>` : ""}</button>`).join("")}</div>`;
       });
       return h || '<p class="m">No drinks match your search.</p>';
     }
     function openSel(n, p) {
       const c = catOf[n];
+      lastN = n;
       sel = { n, p, c, q: 1, serve: c === CF ? "Iced" : "Regular ice", sugar: 100, add: [], note: "" };
       renderModal();
     }
@@ -1275,6 +1991,8 @@
         setTimeout(() => {
           sel = null;
           renderModal();
+          if (view() === "order" && landingStarted && !done) renderOrder();
+          const t = document.querySelector('.item[data-n="' + lastN + '"]'); if (t) t.focus();
         }, 200);
       } else {
         sel = null;
@@ -1283,42 +2001,131 @@
     }
     function renderModal() {
       const m = $("#modal");
+      ["#app", "header"].forEach((s) => { const el = $(s); if (el) el.inert = !!sel; });
       if (!sel) {
         m.innerHTML = "";
-        document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
         return;
       }
-      document.body.style.overflow = "hidden";
+      const fa0 = document.activeElement, fk = fa0 && fa0.closest && fa0.closest(".sheet") ? (fa0.id ? "#" + fa0.id : ["sv", "sg", "ad", "sq"].map((k) => fa0.dataset[k] != null ? `[data-${k}="${fa0.dataset[k]}"]` : "").join("")) : "";
+      document.documentElement.style.overflow = "hidden";
       const av = ADDONS.filter((a) => a.c.includes(sel.c)), ap = av.filter((a) => sel.add.includes(a.id)).reduce((s, a) => s + a.p, 0), sv = sel.c === CF ? ["Hot", "Iced"] : ["Regular ice", "Less ice", "No ice"];
       m.innerHTML = `<div class="ov" role="dialog" aria-modal="true" aria-label="Customize ${esc(sel.n)}"><div class="sheet"><button class="x" aria-label="Close modal">\u2715</button><div class="sh"><div class="art2">${art(sel.n)}</div><div><h2 style="font-size:30px">${sel.n}</h2><div class="m">${sel.c} \xB7 base ${peso(sel.p)}</div></div></div>
     <h4>Serve</h4><div class="opts">${sv.map((x) => `<button class="op ${sel.serve === x ? "on" : ""}" data-sv="${x}">${x}</button>`).join("")}</div>
     <h4>Sugar level</h4><div class="opts">${[0, 25, 50, 75, 100].map((x) => `<button class="op ${sel.sugar === x ? "on" : ""}" data-sg="${x}">${x}%</button>`).join("")}</div>
     <h4>Add-ons</h4><div class="adds">${av.map((a) => `<button class="ad ${sel.add.includes(a.id) ? "on" : ""}" data-ad="${a.id}"><span>${a.e} ${a.n}</span><b>+${peso(a.p)}</b></button>`).join("")}</div>
     <h4>Special request</h4><input id="nt" maxlength="60" placeholder="e.g. extra hot, separate cup" value="${esc(sel.note)}">
-    <div class="bar"><span class="q big"><button data-sq="-1">\u2212</button>${sel.q}<button data-sq="1">+</button></span><button class="btn" id="addc">ADD TO ORDER \xB7 ${peso((sel.p + ap) * sel.q)}</button></div></div></div>`;
+    <button class="op" data-fav aria-pressed="${isFav(sel)}" style="margin-top:14px">${isFav(sel) ? "\u2665 Saved to my usuals" : "\u2661 Save as my usual"}</button>
+    <div class="bar"><span class="q big"><button data-sq="-1" aria-label="Decrease quantity">\u2212</button>${sel.q}<button data-sq="1" aria-label="Increase quantity">+</button></span><button class="btn" id="addc">ADD TO ORDER \xB7 ${peso((sel.p + ap) * sel.q)}</button></div></div></div>`;
       
-      // Accessibility trap focus
+      // Focus management: background is inert; focus is restored to the same control after each re-render
       const sheet = m.querySelector('.sheet');
       if (sheet) {
-        const focusables = sheet.querySelectorAll('button, input');
-        if (focusables.length) focusables[0].focus();
+        const re = fk && sheet.querySelector(fk), first = sheet.querySelector('button, input');
+        const focusTarget = re || first;
+        if (focusTarget) focusTarget.focus({ preventScroll: true });
       }
+      fitSheet();
     }
+    // Philippine senior citizen / PWD discount calculation. Menu prices are treated as VAT-inclusive
+    // only when the store is configured as VAT-registered. This is a digital payment receipt,
+    // not a BIR-authorized invoice or substitute for the registered POS/invoicing system.
+    function orderGross(o) { return (o.items || []).reduce((sum, i) => sum + unit(i) * (Number(i.q) || 0), 0); }
+    function taxBreakdown(o) {
+      const gross = Number(o.total != null ? o.total : orderGross(o)) || 0;
+      const hasPrivilege = ["Senior Citizen", "PWD"].includes(o.discountType);
+      if (TAX.vatRegistered) {
+        const vatable = gross / 1.12;
+        const vat = gross - vatable;
+        const discount = hasPrivilege ? vatable * 0.20 : 0;
+        return { gross, vatable, vat: hasPrivilege ? 0 : vat, vatRemoved: hasPrivilege ? vat : 0, discount, net: Math.max(0, gross - vat - discount) };
+      }
+      const discount = hasPrivilege ? gross * 0.20 : 0;
+      return { gross, vatable: 0, vat: 0, vatRemoved: 0, discount, net: Math.max(0, gross - discount) };
+    }
+    function refreshCheckoutTotal() {
+      const preview = { items: cart, total: ctot(), discountType };
+      return taxBreakdown(preview).net;
+    }
+    function saveTaxProfile() {
+      TAX = { vatRegistered: $("#tax-vat").checked, registeredName: $("#tax-name").value.trim(), tin: $("#tax-tin").value.trim(), address: $("#tax-address").value.trim() };
+      lsSet("hhoodTax", JSON.stringify(TAX));
+      if (setColl) setColl.doc("taxprofile").set({ k: "taxprofile", ...TAX }).catch(console.error);
+      say("Tax profile saved"); render();
+    }
+    function printReceipt(id) {
+      const o = orders.find(x => x.id === id) || (done && done.id === id ? done : null);
+      if (!o) return;
+      if (!o.paid && !(o.pay === "GCash" && o.verified)) { alert("Payment must be confirmed before issuing a payment receipt."); return; }
+      const b = taxBreakdown(o);
+      let t = document.getElementById("ticket"); if (!t) { t = document.createElement("div"); t.id = "ticket"; document.body.appendChild(t); }
+      const lines = (o.items || []).map(i => `<div><b>${Number(i.q)||0} x ${esc(i.n)}</b><div class="receipt-row"><span>${peso(unit(i))} each</span><span>${peso(unit(i)*(Number(i.q)||0))}</span></div><small>${esc(lineDesc(i))}</small></div>`).join("<hr>");
+      t.innerHTML = `<div class="receipt-title">${esc(TAX.registeredName || "H-HOOD CAFE")}</div>${TAX.address ? `<div class="receipt-small">${esc(TAX.address)}</div>` : ""}${TAX.tin ? `<div class="receipt-small">TIN: ${esc(TAX.tin)}</div>` : ""}<hr><div class="receipt-title">PAYMENT RECEIPT</div><div class="receipt-small">DIGITAL COPY · ORDER #${esc(o.no)}</div><hr><div>Receipt ref: ${esc(o.receiptNo || ("HR-" + String(o.no).padStart(4,"0")))}</div><div>Date: ${new Date(o.paidAt || o.t).toLocaleString()}</div><div>Customer: ${esc(o.name || "Guest")}</div><div>Order type: ${esc(o.type || "")}${o.table ? " · Table " + esc(o.table) : ""}</div><div>Payment: ${esc(o.pay || "Cash")}</div><hr>${lines}<hr><div class="receipt-row"><span>Gross amount</span><span>${peso(b.gross)}</span></div>${TAX.vatRegistered ? `<div class="receipt-row"><span>VATable sales</span><span>${peso(b.vatable)}</span></div><div class="receipt-row"><span>VAT (12%)</span><span>${peso(b.vat)}</span></div>${b.vatRemoved ? `<div class="receipt-row"><span>VAT exempted</span><span>${peso(b.vatRemoved)}</span></div>` : ""}` : `<div class="receipt-row"><span>VAT</span><span>Non-VAT registered</span></div>`}${b.discount ? `<div class="receipt-row"><span>${esc(o.discountType)} discount (20%)</span><span>-${peso(b.discount)}</span></div><div>Discount ID: ${esc(o.discountId || "")}</div><div>Discount holder: ${esc(o.discountName || "")}</div><div style="margin-top:16px;border-top:1px solid #000;font-size:10px;text-align:center">Customer signature</div>` : ""}<hr><div class="receipt-row receipt-total"><span>AMOUNT PAID</span><span>${peso(b.net)}</span></div>${o.cashGiven ? `<div class="receipt-row"><span>Cash received</span><span>${peso(o.cashGiven)}</span></div><div class="receipt-row"><span>Change</span><span>${peso(o.change || 0)}</span></div>` : ""}<div class="receipt-row"><span>Payment status</span><b>PAID</b></div><div class="receipt-note">This is a digital payment receipt / supplementary proof of payment only. It is NOT a BIR-registered VAT Invoice or Official Receipt. Request the establishment's registered invoice where applicable.</div><div class="receipt-small">Thank you for choosing H-HOOD CAFE!</div>`;
+      window.print();
+    }
+    function markCashPaid(id) {
+      const o = orders.find(x => x.id === id); if (!o || o.pay !== "Cash") return;
+      if (o.discountType && !confirm("Verify the customer's " + o.discountType + " ID (" + (o.discountId || "not provided") + ") before applying the statutory discount. Continue only if verified.")) return;
+      if (!confirm("Confirm that cash payment has been received for order #" + o.no + "?")) return;
+      o.paid = true; o.paidAt = Date.now(); o.receiptNo = o.receiptNo || ("HR-" + String(o.t).slice(-8) + "-" + String(o.no));
+      Promise.resolve(save(o)).then(() => { printReceipt(id); render(); });
+    }
+    function editHistoryOrder(id) {
+      const o = orders.find(x => x.id === id); if (!o) return;
+      const name = prompt("Customer name:", o.name || ""); if (name === null) return;
+      const orderType = prompt("Order type (Dine-in or Take-out):", o.type || "Take-out"); if (orderType === null) return;
+      const status = prompt("Order status (new, preparing, ready, done, cancelled):", o.status || "new"); if (status === null) return;
+      if (!["new", "preparing", "ready", "done", "cancelled"].includes(status)) { alert("Invalid order status. No changes were saved."); return; }
+      const discountType = prompt("STAFF ONLY — Apply discount? Enter None, Senior Citizen, or PWD:", o.discountType || "None"); if (discountType === null) return;
+      const normalizedDiscount = ["Senior Citizen", "PWD"].includes(discountType.trim()) ? discountType.trim() : "";
+      if (discountType.trim() && discountType.trim() !== "None" && !normalizedDiscount) { alert("Enter None, Senior Citizen, or PWD."); return; }
+      let discountName = "", discountId = "";
+      if (normalizedDiscount) {
+        discountName = prompt("STAFF ONLY — Name exactly as shown on the verified ID:", o.discountName || ""); if (discountName === null) return;
+        discountId = prompt("STAFF ONLY — Verified Senior Citizen / PWD ID number:", o.discountId || ""); if (discountId === null) return;
+        if (!discountName.trim() || !discountId.trim()) { alert("A verified ID name and number are required. No changes were saved."); return; }
+        if (!confirm("Confirm that staff physically checked the customer's valid " + normalizedDiscount + " ID?")) return;
+      }
+      const itemText = prompt("Edit items (one item per line): Drink name | Quantity | Base price | Add-on price", o.items.map(i => `${i.n} | ${i.q} | ${i.p} | ${i.ap || 0}`).join("\n"));
+      if (itemText === null) return;
+      let items; try { items = itemText.split(/\r?\n/).map(line => { const v = line.split("|").map(x => x.trim()); if (!v[0]) return null; const old = o.items.find(i => i.n.toLowerCase() === v[0].toLowerCase()) || {}; return {...old,n:v[0].slice(0,80),q:Math.max(1,Math.floor(Number(v[1])||1)),p:Math.max(0,Number(v[2])||0),ap:Math.max(0,Number(v[3])||0)}; }).filter(Boolean); if (!items.length) throw new Error(); } catch(_) { alert("Invalid item details. Use: Drink name | Quantity | Base price | Add-on price. No changes were saved."); return; }
+      o.name = name.trim().slice(0,40); o.type = orderType === "Dine-in" ? "Dine-in" : "Take-out"; o.status = status; o.items = items; o.total = orderGross(o); o.discountType = normalizedDiscount; o.discountName = discountName.trim().slice(0,80); o.discountId = discountId.trim().slice(0,40);
+      const b = taxBreakdown(o); o.amountDue = b.net; o.editedAt = Date.now();
+      save(o).then(() => { say("Order #" + o.no + " updated"); render(); });
+    }
+    function deleteHistoryOrder(id) {
+      const o = orders.find(x => x.id === id); if (!o || !confirm("Permanently remove order #" + o.no + " from order history?")) return;
+      if (coll) coll.doc(id).delete().then(() => { orders = orders.filter(x => x.id !== id); render(); }).catch(console.error);
+      else { local = local.filter(x => x.id !== id); orders = local; lsSet("hhoodOrders", JSON.stringify(local)); render(); }
+    }
+
     function renderOrder() {
-      const keep = $("#cn") ? $("#cn").value : "", total = ctot();
+      const keep = $("#cn") ? $("#cn").value : "", total = ctot(), itemCount = cart.reduce((s, l) => s + l.q, 0);
       if (done) {
-        $("#app").innerHTML = `<div class="cart ok" style="max-width:420px;margin:30px auto;position:static" aria-live="polite"><div style="font-size:60px">\u{1F430}\u2615</div><p class="m">YOUR ORDER NUMBER</p><div class="no">#${done.no}</div><p>Thanks${done.name ? ", " + esc(done.name) : ""}! (${done.type}) ${done.pay === "GCash" ? "Your GCash reference was received. Staff will confirm your payment, then start your drink." : "Please pay at the counter."} We'll call you when it's ready.</p><p class="m">Total ${peso(done.total)} \xB7 ${payTag(done)}</p><button class="btn" onclick="done=null;gref='';cart=[];landingStarted=false;history.replaceState(null,'',location.pathname+location.search);render();window.scrollTo({top:0,behavior:'smooth'})">BACK TO HOME</button></div>`;
+        renderTrack();
         return;
       }
-      $("#app").innerHTML = `<div class="hero"><div><h2>What are you having today?</h2><p>Pick a drink, customize it, pay at the counter.</p></div><div class="hero-badge"><img src="hhood_cafe_animated.gif" alt="H-HOOD CAFE Rabbit mascot balancing a coffee cup"></div></div>
-    <div class="chips"><input id="qs" class="srch" placeholder="\u{1F50D} Search drinks" value="${esc(qs)}">${MENU.map(([c], i) => `<button data-go="c${i}">${c}</button>`).join("")}</div>
-    <div class="layout"><div id="menu">${menuHTML()}</div>
-    <aside class="cart" id="cart" aria-live="polite"><h2>Your Order</h2>${cart.length ? cart.map((l, i) => `<div class="row"><div><b>${l.n}</b><div class="m">${lineDesc(l)}</div></div><span class="q"><button data-d="-1" data-i="${i}">\u2212</button>${l.q}<button data-d="1" data-i="${i}">+</button></span><span>${peso(unit(l) * l.q)}</span></div>`).join("") : '<p class="m">Tap a drink to customize and add it.</p>'}
-    <div class="tot"><span>TOTAL</span><span>${peso(total)}</span></div>
-    <div class="sec"><h4>ORDER DETAILS</h4><div class="seg">${["Dine-in", "Take-out"].map((t) => `<button data-ot="${t}" class="${otype === t ? "on" : ""}">${t === "Dine-in" ? "\u{1FA91}" : "\u{1F6CD}\uFE0F"} ${t}</button>`).join("")}</div>${otype === "Dine-in" ? `<input id="tb" placeholder="Table no. (optional)" maxlength="6" value="${esc(tbv)}" oninput="tbv=this.value">` : ""}<input id="cn" placeholder="Your name (optional)" value="${esc(keep)}"></div>
-    <div class="sec"><h4>PAYMENT</h4><div class="pms"><button class="pm ${pay === "Cash" ? "on" : ""}" data-pm="Cash">\u{1F4B5} Cash<small>Pay at the counter</small></button><button class="pm gc ${pay === "GCash" ? "on" : ""}" data-pm="GCash">\u{1F4F1} GCash<small>Scan the QR &amp; pay now</small></button></div>${pay === "GCash" ? `<div class="gc-box">${GCASH.qr ? `<img class="qr" src="${GCASH.qr}" alt="GCash QR code">` : '<div class="qrph">QR code not set up yet. Use the number below.</div>'}<div class="m">Send exactly</div><div class="amt">${peso(total)}</div><div class="gno"><span>${esc(GCASH.no)}</span><button data-cp>Copy</button></div><div class="m">${esc(GCASH.name)}</div></div><input id="gr" placeholder="Enter GCash reference no." maxlength="20" inputmode="numeric" value="${esc(gref)}" oninput="gref=this.value;document.getElementById('place').disabled=!(cart.length&&gref.trim().length>=6)"><p class="m">Staff confirm your payment before your drink is made.</p>` : '<p class="m">Pay at the counter when you pick up.</p>'}</div>
-    <div class="place"><button class="btn" id="place" ${cart.length && (pay !== "GCash" || gref.trim().length >= 6) && !isSubmitting ? "" : "disabled"}>${isSubmitting ? '<span class="spinner"></span> PROCESSING...' : `PLACE ORDER \xB7 ${peso(total)}`}</button></div></aside></div>
-    ${cart.length ? `<button class="btn fab" data-go="cart">VIEW ORDER \xB7 ${cart.reduce((s, l) => s + l.q, 0)} \xB7 ${peso(total)}</button>` : ""}`;
+      if (orderStep === "cart") {
+        $("#app").innerHTML = `<div style="max-width:600px;margin:12px auto 36px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">
+            <button class="btn s gh" id="back-menu" type="button">\u2190 ADD MORE DRINKS</button>
+            <span class="m">${itemCount} ${itemCount === 1 ? "drink" : "drinks"} selected</span>
+          </div>
+          <section class="cart" id="cart" aria-label="Your order" style="position:static;max-height:none;overflow:visible">
+            <h2>Your Order</h2>
+            ${cart.length ? cart.map((l, i) => `<div class="row"><div><b>${l.n}</b><div class="m">${lineDesc(l)}</div></div><span class="q"><button data-d="-1" data-i="${i}" aria-label="One less ${esc(l.n)}">\u2212</button>${l.q}<button data-d="1" data-i="${i}" aria-label="One more ${esc(l.n)}">+</button></span><span>${peso(unit(l) * l.q)}</span></div>`).join("") : '<p class="m">Your order is empty. Go back to pick a drink.</p>'}
+            <div class="tot"><span>TOTAL</span><span>${peso(total)}</span></div>
+            <div class="sec"><h4>ORDER DETAILS</h4><div class="seg">${["Dine-in", "Take-out"].map((t) => `<button data-ot="${t}" class="${otype === t ? "on" : ""}">${t === "Dine-in" ? "\u{1FA91}" : "\u{1F6CD}\uFE0F"} ${t}</button>`).join("")}</div>${otype === "Dine-in" ? `<input id="tb" placeholder="Table no. (optional)" maxlength="6" value="${esc(tbv)}" oninput="window.setTbv(this.value)">` : ""}<input id="cn" placeholder="Your name (optional)" value="${esc(keep)}"></div>
+            <div class="sec"><h4>PAYMENT</h4><div class="pms"><button class="pm ${pay === "Cash" ? "on" : ""}" data-pm="Cash">\u{1F4B5} Cash<small>Pay at the counter</small></button><button class="pm gc ${pay === "GCash" ? "on" : ""}" data-pm="GCash">\u{1F4F1} GCash<small>Scan the QR &amp; pay now</small></button></div>${pay === "GCash" ? `<div class="gc-box">${GCASH.qr ? `<img class="qr" src="${GCASH.qr}" alt="GCash QR code">` : '<div class="qrph">QR code not set up yet. Use the number below.</div>'}<div class="m">Send exactly</div><div class="amt">${peso(refreshCheckoutTotal())}</div><div class="gno"><span>${esc(GCASH.no)}</span><button data-cp>Copy</button></div><div class="m">${esc(GCASH.name)}</div></div><input id="gr" placeholder="Ref no. e.g. 1234 567 890123" maxlength="15" inputmode="numeric" autocomplete="off" aria-describedby="grh" value="${esc(gref)}" oninput="onGref(this)"><p class="m" id="grh" style="margin:0">13 digits, shown on your GCash receipt.</p><p class="m">Staff confirm your payment before your drink is made.</p>` : '<p class="m">Pay at the counter when you pick up.</p>'}</div>
+            <div class="place" style="position:static"><button class="btn" id="place" ${cart.length && (pay !== "GCash" || gok()) && !isSubmitting ? "" : "disabled"}>${isSubmitting ? '<span class="spinner"></span> PROCESSING...' : `PLACE ORDER \xB7 ${peso(refreshCheckoutTotal())}`}</button></div>
+          </section>
+        </div>`;
+        return;
+      }
+      $("#app").innerHTML = `<div class="hero"><div><h2>What are you having today?</h2><p>Pick a drink, customize it, then proceed to your order.</p></div><div class="hero-badge"><img src="hhood_cafe_animated.gif" alt="H-HOOD CAFE Rabbit mascot balancing a coffee cup"></div></div>
+    <div class="chips"><input id="qs" class="srch" placeholder="\u{1F50D} Search drinks" value="${esc(qs)}">${MENU.map(([c], i) => `<button data-go="c${i}">${c}</button>`).join("")}${cart.length ? `<button class="btn s" id="to-cart" style="margin-left:auto">YOUR ORDER (${itemCount}) \xB7 ${peso(total)} \u2192</button>` : ""}</div>
+    <div>${dietBar()}${favsHTML()}<div id="menu">${menuHTML()}</div></div>
+    ${cart.length ? `<div style="position:sticky;bottom:14px;z-index:5;margin-top:20px;display:flex;justify-content:center"><button class="btn" id="to-cart-bar" style="max-width:520px;box-shadow:0 12px 32px rgba(0,0,0,.55)">PROCEED TO YOUR ORDER (${itemCount}) \xB7 ${peso(total)} \u2192</button></div>` : ""}`;
     }
 
     // ============================================================
@@ -1336,7 +2143,13 @@
         onSearchDebounced(e.target.value);
       }
       if (e.target.id === "nt" && sel) sel.note = e.target.value;
+      if (e.target.id === "gno") e.target.value = maskDigits(e.target.value, [4, 3, 4]);
+      if (e.target.id === "bn" || e.target.id === "bc") {
+        if (e.target.id === "bn") batch.n = e.target.value; else batch.c = e.target.value;
+        const b = $("#bout"); if (b) b.innerHTML = batchOut();
+      }
     });
+
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && sel) {
@@ -1345,13 +2158,11 @@
       if (sel && e.key === "Tab") {
         const sheet = document.querySelector('.sheet');
         if (sheet) {
-          const focusables = Array.from(sheet.querySelectorAll('button, input'));
+          const focusables = Array.from(sheet.querySelectorAll('button:not([disabled]), input:not([disabled]), select, textarea, [href]'));
+          if (!focusables.length) return;
           const idx = focusables.indexOf(document.activeElement);
-          if (e.shiftKey && idx === 0) {
-            focusables[focusables.length - 1].focus();
-            e.preventDefault();
-          } else if (!e.shiftKey && idx === focusables.length - 1) {
-            focusables[0].focus();
+          if (idx === -1 || (e.shiftKey && idx === 0) || (!e.shiftKey && idx === focusables.length - 1)) {
+            (e.shiftKey ? focusables[focusables.length - 1] : focusables[0]).focus();
             e.preventDefault();
           }
         }
@@ -1359,8 +2170,34 @@
     });
 
     document.addEventListener("click", (e) => {
+      if (e.target.closest("#skip-coffee-intro")) { finishCoffeeIntro(); return; }
+      if (e.target.closest("#back-home")) {
+        done = null; gref = ""; cart = []; landingStarted = false; orderStep = "menu";
+        history.replaceState(null, "", location.pathname + location.search);
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (e.target.closest("#track-order")) {
+        const o = tkGet();
+        if (o) { done = o; lastSt = ""; landingStarted = true; if (location.hash !== "#order") history.replaceState(null, "", "#order"); render(); window.scrollTo({ top: 0 }); }
+        return;
+      }
+      if (e.target.closest("#snd")) { soundOn = !soundOn; lsSet("hhoodSnd", soundOn ? "1" : "0"); if (soundOn) chime(); render(); return; }
+      const pt = e.target.closest("[data-pt]");
+      if (pt) { printTicket(pt.dataset.pt); return; }
+      const receipt = e.target.closest("[data-receipt]");
+      if (receipt) { printReceipt(receipt.dataset.receipt); return; }
+      const paidBtn = e.target.closest("[data-paid]");
+      if (paidBtn) { markCashPaid(paidBtn.dataset.paid); return; }
+      const editBtn = e.target.closest("[data-edit-order]");
+      if (editBtn) { editHistoryOrder(editBtn.dataset.editOrder); return; }
+      const delBtn = e.target.closest("[data-delete-order]");
+      if (delBtn) { deleteHistoryOrder(delBtn.dataset.deleteOrder); return; }
+      const bn = e.target.closest("[data-bn]");
+      if (bn) { batch.n = +bn.dataset.bn; render(); return; }
       if (e.target.closest("#start-order")) {
-        landingStarted = true;
+        landingStarted = true; orderStep = "menu";
         if (location.hash !== "#order") history.replaceState(null, "", "#order");
         render();
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1403,11 +2240,23 @@
           renderModal();
           return;
         }
+        if (e.target.closest("[data-fav]")) {
+          if (!isFav(sel)) { favs.unshift(favOf(sel)); favs = favs.slice(0, 6); favSave(); say("Saved " + sel.n + " to my usuals"); }
+          renderModal();
+          return;
+        }
+        if (e.target.id === "addc" && posMode) {
+          const l = mkLine(sel); addLine(l); say("Added " + l.q + " " + l.n + ". Total " + peso(ctot()));
+          closeSel();
+          setTimeout(() => { if (posMode) renderCashier(); }, 260);
+          return;
+        }
         if (e.target.id === "addc") {
-          const ch = av.filter((a) => sel.add.includes(a.id)), l = { n: sel.n, p: sel.p, ap: ch.reduce((x, a) => x + a.p, 0), q: sel.q, serve: sel.serve, sugar: sel.sugar, add: ch.map((a) => a.n), note: sel.note.trim() }, key = JSON.stringify([l.n, l.serve, l.sugar, l.add, l.note]), ex = cart.find((c) => c.key === key);
-          ex ? ex.q += l.q : cart.push({ ...l, key });
+          const l = mkLine(sel); addLine(l); say("Added " + l.q + " " + l.n + " to your order. Total " + peso(ctot()));
+          orderStep = "cart";
           closeSel();
           renderOrder();
+          window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
         return;
@@ -1417,6 +2266,24 @@
         openSel(it.dataset.n, +it.dataset.p);
         return;
       }
+      const dfb = e.target.closest("[data-df]");
+      if (dfb) { dietF = dietF === dfb.dataset.df ? "" : dfb.dataset.df; renderOrder(); return; }
+      if (e.target.closest("#back-menu")) {
+        orderStep = "menu";
+        renderOrder();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (e.target.closest("#to-cart") || e.target.closest("#to-cart-bar")) {
+        orderStep = "cart";
+        renderOrder();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      const fa = e.target.closest("[data-fa]");
+      if (fa) { const f = favs[+fa.dataset.fa]; if (f) { const l = mkLine(f); addLine(l); say("Added " + l.n + " to your order. Total " + peso(ctot())); orderStep = "cart"; renderOrder(); window.scrollTo({ top: 0, behavior: "smooth" }); } return; }
+      const fr = e.target.closest("[data-fr]");
+      if (fr) { favs.splice(+fr.dataset.fr, 1); favSave(); say("Removed from my usuals"); renderOrder(); return; }
       const ot = e.target.closest("[data-ot]");
       if (ot) {
         otype = ot.dataset.ot;
@@ -1428,25 +2295,46 @@
         const c = cart[+d.dataset.i];
         c.q += +d.dataset.d;
         if (c.q <= 0) cart.splice(+d.dataset.i, 1);
+        say(c.q <= 0 ? "Removed " + c.n + ". Total " + peso(ctot()) : c.n + " quantity " + c.q + ". Total " + peso(ctot()));
         renderOrder();
         return;
       }
       const pm = e.target.closest("[data-pm]");
       if (pm) { pay = pm.dataset.pm; renderOrder(); return; }
       if (e.target.id === "place") {
-        if (pay === "GCash" && gref.trim().length < 6) return;
+        if (pay === "GCash" && !gok()) return;
         isSubmitting = true;
         renderOrder();
         setTimeout(() => {
-          const items = cart.map((l) => ({ n: l.n, p: l.p, ap: l.ap, q: l.q, serve: l.serve, sugar: l.sugar, add: l.add, note: l.note })), o = { type: otype, id: "o" + Date.now(), no: String(Math.floor(Math.random() * 900) + 100), name: ($("#cn").value || "").trim().slice(0, 30), table: otype === "Dine-in" ? tbv.trim().slice(0, 6) : "", pay, ref: pay === "GCash" ? gref.trim().slice(0, 20) : "", verified: false, items, total: items.reduce((s, i) => s + unit(i) * i.q, 0), status: "new", t: Date.now() };
+          const items = cart.map((l) => ({ n: l.n, p: l.p, ap: l.ap, q: l.q, serve: l.serve, sugar: l.sugar, add: l.add, note: l.note })), o = { type: otype, id: "o" + Date.now(), no: String(Math.floor(Math.random() * 900) + 100), name: ($("#cn").value || "").trim().slice(0, 30), table: otype === "Dine-in" ? tbv.trim().slice(0, 6) : "", pay, ref: pay === "GCash" ? gref.trim().slice(0, 20) : "", verified: false, paid: false, items, total: items.reduce((s, i) => s + unit(i) * i.q, 0), status: "new", t: Date.now() };
+          o.amountDue = taxBreakdown(o).net;
           cart = [];
-          done = o;
+          done = o; lastSt = ""; tkSet(o);
           isSubmitting = false;
           save(o);
           render();
         }, 400);
         return;
       }
+      if (e.target.id === "pos-new") { posMode = true; posStep = "menu"; cdisc = { type: "None", name: "", id: "", ok: false }; cart = []; qs = ""; pos = { name: "", type: "Dine-in", table: "", pay: "Cash" }; render(); return; }
+      if (e.target.id === "pos-to-cart" || e.target.id === "pos-to-cart-bar") { posStep = "cart"; renderCashier(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+      if (e.target.id === "pos-back-menu") { posStep = "menu"; renderCashier(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+      if (e.target.id === "pos-back") { posMode = false; cart = []; qs = ""; render(); return; }
+      const pq = e.target.closest("[data-pq]");
+      if (pq) { const [i, d] = pq.dataset.pq.split("|"); const c = cart[+i]; if (c) { c.q += +d; if (c.q <= 0) cart.splice(+i, 1); } renderCashier(); return; }
+      const pot = e.target.closest("[data-pot]");
+      if (pot) { pos.type = pot.dataset.pot; renderCashier(); return; }
+      const ppay = e.target.closest("[data-ppay]");
+      if (ppay) { pos.pay = ppay.dataset.ppay; renderCashier(); return; }
+      if (e.target.id === "pos-place") { posPlace(); return; }
+      const cq = e.target.closest("[data-cq]");
+      if (cq) { cashierId = cq.dataset.cq; const o = orders.find((x) => x.id === cashierId); cdisc = { type: (o && o.discountType) || "None", name: (o && o.discountName) || "", id: (o && o.discountId) || "", ok: false }; render(); return; }
+      if (e.target.id === "cq-back") { cashierId = null; render(); return; }
+      const cdt = e.target.closest("[data-cdt]");
+      if (cdt) { cdisc.type = cdt.dataset.cdt; if (cdisc.type === "None") { cdisc.name = ""; cdisc.id = ""; cdisc.ok = false; } render(); return; }
+      if (e.target.id === "cd-ok") { cdisc.ok = e.target.checked; return; }
+      if (e.target.id === "cq-save") { cashierConfirm(false); return; }
+      if (e.target.id === "cq-pay") { cashierConfirm(true); return; }
       const tb = e.target.closest("[data-tab]");
       if (tb) {
         tab = tb.dataset.tab;
@@ -1475,12 +2363,13 @@
         exportCsv();
         return;
       }
+      if (e.target.id === "tax-save") { saveTaxProfile(); return; }
       if (e.target.id === "gsave") { saveGcash({ no: $("#gno").value.trim().slice(0, 20), name: $("#gnm").value.trim().slice(0, 40) }); return; }
       if (e.target.id === "gclr") { saveGcash({ qr: "" }); return; }
       const cp = e.target.closest("[data-cp]");
       if (cp) { try { navigator.clipboard.writeText(GCASH.no.replace(/\s/g, "")).then(() => { cp.textContent = "Copied \u2713"; }); } catch (_) {} return; }
       const vf = e.target.closest("[data-vf]");
-      if (vf) { const o = orders.find((x) => x.id === vf.dataset.vf); if (o) { o.verified = true; if (coll) coll.doc(o.id).update({ verified: true }); else render(); } return; }
+      if (vf) { const o = orders.find((x) => x.id === vf.dataset.vf); if (o) { if (o.discountType && !confirm("Verify the customer's " + o.discountType + " ID (" + (o.discountId || "not provided") + ") before confirming this discounted payment.")) return; o.verified = true; o.paid = true; o.paidAt = Date.now(); o.receiptNo = o.receiptNo || ("HR-" + String(o.t).slice(-8) + "-" + String(o.no)); say("GCash payment verified for order #" + o.no); if (coll) coll.doc(o.id).update({ verified: true, paid: true, paidAt: o.paidAt, receiptNo: o.receiptNo }); else save(o); } return; }
       const rd = e.target.closest("[data-rd]");
       if (rd) { redeem(rd.dataset.rd); return; }
       const wb = e.target.closest("[data-w]");
@@ -1500,11 +2389,12 @@
           });
           useIngredients(o);
         }
+        say("Order #" + o.no + " " + ({ preparing: "started", ready: "is ready for pickup", done: "completed", cancelled: "cancelled" })[st.dataset.st]);
         if (st.dataset.st === "done") earn(o);
         if (coll) coll.doc(id).update({ status: st.dataset.st });
         else {
           o.status = st.dataset.st;
-          render();
+          save(o);
         }
       }
     });
@@ -1514,7 +2404,103 @@
     // ============================================================
 
     function tabs() {
-      return `<div class="tabs">${[["orders", "Orders"], ["kds", "Barista"], ["inventory", "Inventory"], ["ingredients", "Ingredients"], ["sales", "Sales & Forecast"], ["settings", "Settings"]].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? "on" : ""}">${l}</button>`).join("")}${["inventory", "sales"].includes(tab) ? `<button id="demo" style="margin-left:auto">${demo ? "Back to live data" : "Preview with sample data"}</button>` : ""}</div>${demo && ["inventory", "sales"].includes(tab) ? '<div class="note">Showing generated sample data (3 weeks of orders) so you can preview the charts and predictions. Nothing is saved.</div>' : ""}`;
+      return `<div class="tabs">${[["orders", "Orders"], ["history", "Order History"], ["kds", "Barista"], ["inventory", "Inventory"], ["ingredients", "Ingredients"], ["sales", "Sales & Forecast"], ["settings", "Settings"]].map(([k, l]) => `<button data-tab="${k}" class="${tab === k ? "on" : ""}">${l}</button>`).join("")}<button id="snd" style="margin-left:auto" aria-pressed="${soundOn}">${soundOn ? "\u{1F514} Sound on" : "\u{1F515} Sound off"}</button>${["inventory", "sales"].includes(tab) ? `<button id="demo">${demo ? "Back to live data" : "Preview with sample data"}</button>` : ""}</div>${demo && ["inventory", "sales"].includes(tab) ? '<div class="note">Showing generated sample data (3 weeks of orders) so you can preview the charts and predictions. Nothing is saved.</div>' : ""}`;
+    }
+    // ---- Cashier: staff picks an order number, applies the PWD / Senior discount, then confirms payment
+    let cashierId = null, cdisc = { type: "None", name: "", id: "", ok: false };
+    document.addEventListener("input", (e) => {
+      if (e.target.id === "cd-name") cdisc.name = e.target.value;
+      if (e.target.id === "cd-id") cdisc.id = e.target.value;
+      if (e.target.id === "cd-cash") { cdisc.cash = e.target.value; const o = orders.find((x) => x.id === cashierId), c = $("#cd-change"); if (o && c) { const due = taxBreakdown({ ...o, total: orderGross(o), discountType: cdisc.type === "Senior Citizen" || cdisc.type === "PWD" ? cdisc.type : "" }).net; c.textContent = Number(cdisc.cash) >= due ? "Change: " + peso(Number(cdisc.cash) - due) : ""; } }
+      if (e.target.id === "pos-name") pos.name = e.target.value;
+      if (e.target.id === "pos-table") pos.table = e.target.value;
+      if (e.target.id === "pos-qs") { qs = e.target.value; const m = $("#pos-menu"); if (m) m.innerHTML = menuHTML(); }
+    });
+    let posStep = "menu", posMode = false, pos = { name: "", type: "Dine-in", table: "", pay: "Cash" };
+    function posPlace() {
+      if (!cart.length) { alert("Add at least one drink first."); return; }
+      const priv = cdisc.type === "Senior Citizen" || cdisc.type === "PWD";
+      if (priv && (!cdisc.name.trim() || !cdisc.id.trim())) { alert("Enter the name and ID number exactly as shown on the customer's ID."); return; }
+      if (priv && !cdisc.ok) { alert("Tick the box to confirm you physically checked a valid " + cdisc.type + " ID."); return; }
+      const items = cart.map((l) => ({ n: l.n, p: l.p, ap: l.ap, q: l.q, serve: l.serve, sugar: l.sugar, add: l.add, note: l.note }));
+      const o = { type: pos.type, id: "o" + Date.now(), no: String(Math.floor(Math.random() * 900) + 100), name: pos.name.trim().slice(0, 30) || "Walk-in", table: pos.type === "Dine-in" ? pos.table.trim().slice(0, 6) : "", pay: pos.pay, ref: pos.pay === "GCash" ? "counter" : "", verified: false, paid: false, items, total: items.reduce((t, i) => t + unit(i) * i.q, 0), status: "new", t: Date.now(), staffEntered: true, discountType: priv ? cdisc.type : "", discountName: priv ? cdisc.name.trim().slice(0, 80) : "", discountId: priv ? cdisc.id.trim().slice(0, 40) : "" };
+      o.amountDue = taxBreakdown(o).net;
+      if (!orders.some((x) => x.id === o.id)) orders.unshift(o);
+      save(o);
+      cart = []; qs = ""; posMode = false;
+      cashierId = o.id; cdisc = { type: o.discountType || "None", name: o.discountName, id: o.discountId, ok: priv };
+      say("Order #" + o.no + " placed. Confirm payment to issue the receipt.");
+      render();
+    }
+    function renderPos() {
+      const n = cart.reduce((t, l) => t + l.q, 0), gross = ctot();
+      const priv = cdisc.type === "Senior Citizen" || cdisc.type === "PWD";
+      if (posStep === "cart") {
+        const b = taxBreakdown({ items: cart, total: gross, discountType: priv ? cdisc.type : "" });
+        const row = (l, v) => `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${l}</span><span>${v}</span></div>`;
+        $("#app").innerHTML = `<div style="max-width:600px;margin:12px auto 36px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><button class="btn s gh" id="pos-back-menu" type="button">\u2190 ADD MORE DRINKS</button><span class="m">${n} ${n === 1 ? "drink" : "drinks"} selected</span></div>
+          <section class="cart" aria-label="Customer order" style="position:static;max-height:none;overflow:visible">
+            <h2>Customer Order</h2>
+            ${cart.length ? cart.map((l, k) => `<div class="row"><div><b>${esc(l.n)}</b><div class="m">${lineDesc(l)}</div></div><span class="q"><button data-pq="${k}|-1" aria-label="One less ${esc(l.n)}">\u2212</button>${l.q}<button data-pq="${k}|1" aria-label="One more ${esc(l.n)}">+</button></span><span>${peso(unit(l) * l.q)}</span></div>`).join("") : '<p class="m">The order is empty. Go back to pick a drink.</p>'}
+            <div class="tot"><span>TOTAL</span><span>${peso(gross)}</span></div>
+            <div class="sec"><h4>ORDER DETAILS</h4><div class="seg">${["Dine-in", "Take-out"].map((t) => `<button data-pot="${t}" class="${pos.type === t ? "on" : ""}">${t === "Dine-in" ? "\u{1FA91}" : "\u{1F6CD}\uFE0F"} ${t}</button>`).join("")}</div>${pos.type === "Dine-in" ? `<input id="pos-table" placeholder="Table no. (optional)" maxlength="6" value="${esc(pos.table)}">` : ""}<input id="pos-name" maxlength="30" placeholder="Customer name (optional)" value="${esc(pos.name)}"></div>
+            <div class="sec"><h4>DISCOUNT</h4><div class="seg">${["None", "Senior Citizen", "PWD"].map((t) => `<button data-cdt="${t}" class="${cdisc.type === t ? "on" : ""}">${t === "None" ? "No discount" : t}</button>`).join("")}</div>${priv ? `<input id="cd-name" placeholder="Name exactly as shown on ID" value="${esc(cdisc.name)}"><input id="cd-id" placeholder="${cdisc.type} ID number" value="${esc(cdisc.id)}"><label style="display:block;margin:8px 0"><input type="checkbox" id="cd-ok" ${cdisc.ok ? "checked" : ""}> I physically checked the customer's valid ${cdisc.type} ID</label>` : ""}
+              <div style="margin-top:8px">${row("Gross amount", peso(b.gross))}${b.vatRemoved ? row("VAT exempted", peso(b.vatRemoved)) : ""}${b.discount ? row(cdisc.type + " discount (20%)", "-" + peso(b.discount)) : ""}</div></div>
+            <div class="sec"><h4>PAYMENT</h4><div class="pms"><button class="pm ${pos.pay === "Cash" ? "on" : ""}" data-ppay="Cash">\u{1F4B5} Cash<small>Customer pays at the counter</small></button><button class="pm gc ${pos.pay === "GCash" ? "on" : ""}" data-ppay="GCash">\u{1F4F1} GCash<small>Customer scans the QR</small></button></div>${pos.pay === "GCash" ? `<div class="gc-box">${GCASH.qr ? `<img class="qr" src="${GCASH.qr}" alt="GCash QR code">` : '<div class="qrph">QR code not set up yet. Use the number below.</div>'}<div class="m">Send exactly</div><div class="amt">${peso(b.net)}</div><div class="gno"><span>${esc(GCASH.no)}</span></div><div class="m">${esc(GCASH.name)}</div></div>` : ""}</div>
+            <div class="place" style="position:static"><button class="btn" id="pos-place" type="button" ${cart.length ? "" : "disabled"}>PLACE ORDER \xB7 ${peso(b.net)}</button></div>
+          </section></div>`;
+        return;
+      }
+      $("#app").innerHTML = `<div class="hero"><div><h2>Take the customer's order</h2><p>Pick a drink, customize it, then proceed to the order.</p></div></div>
+    <div class="chips"><button class="btn s gh" id="pos-back" type="button">\u2190 CASHIER</button><input id="pos-qs" class="srch" placeholder="\u{1F50D} Search drinks" value="${esc(qs)}">${MENU.map(([c], k) => `<button data-go="c${k}">${c}</button>`).join("")}${cart.length ? `<button class="btn s" id="pos-to-cart" style="margin-left:auto">ORDER (${n}) \xB7 ${peso(gross)} \u2192</button>` : ""}</div>
+    <div><div id="pos-menu">${menuHTML()}</div></div>
+    ${cart.length ? `<div style="position:sticky;bottom:14px;z-index:5;margin-top:20px;display:flex;justify-content:center"><button class="btn" id="pos-to-cart-bar" style="max-width:520px;box-shadow:0 12px 32px rgba(0,0,0,.55)">PROCEED TO ORDER (${n}) \xB7 ${peso(gross)} \u2192</button></div>` : ""}`;
+    }
+    function cashierConfirm(pay) {
+      const o = orders.find((x) => x.id === cashierId); if (!o) return;
+      const priv = cdisc.type === "Senior Citizen" || cdisc.type === "PWD";
+      if (priv) {
+        if (!cdisc.name.trim() || !cdisc.id.trim()) { alert("Enter the name and ID number exactly as shown on the customer's ID."); return; }
+        if (!cdisc.ok) { alert("Tick the box to confirm you physically checked a valid " + cdisc.type + " ID."); return; }
+      }
+      o.discountType = priv ? cdisc.type : "";
+      o.discountName = priv ? cdisc.name.trim().slice(0, 80) : "";
+      o.discountId = priv ? cdisc.id.trim().slice(0, 40) : "";
+      o.total = orderGross(o);
+      o.amountDue = taxBreakdown(o).net;
+      o.editedAt = Date.now();
+      if (!pay) { Promise.resolve(save(o)).then(() => { say("Discount saved for order #" + o.no); render(); }); return; }
+      const given = o.pay === "Cash" ? Number(cdisc.cash) || 0 : 0;
+      if (given && given < o.amountDue) { alert("Cash received is less than the amount to pay (" + peso(o.amountDue) + ")."); return; }
+      o.cashGiven = given || 0; o.change = given ? Math.round((given - o.amountDue) * 100) / 100 : 0;
+      if (!confirm("Confirm payment of " + peso(o.amountDue) + " for order #" + o.no + "?")) return;
+      o.paid = true; o.paidAt = Date.now();
+      if (o.pay === "GCash") o.verified = true;
+      o.receiptNo = o.receiptNo || ("HR-" + String(o.t).slice(-8) + "-" + String(o.no));
+      Promise.resolve(save(o)).then(() => { printReceipt(o.id); cashierId = null; say("Order #" + o.no + " payment confirmed"); render(); });
+    }
+    function renderCashier() {
+      if (posMode) return renderPos();
+      const o = cashierId ? orders.find((x) => x.id === cashierId) : null;
+      if (cashierId && !o) cashierId = null;
+      if (!o) {
+        const open = orders.filter((x) => !x.paid && x.status !== "cancelled" && x.status !== "done").sort((a, b) => a.t - b.t);
+        $("#app").innerHTML = `<div class="box"><button class="btn" id="pos-new" type="button">\uFF0B NEW WALK-IN ORDER (staff takes the order)</button></div><div class="box"><h3>Cashier · unpaid orders</h3><p class="m">Ask the customer for their order number, then tap the matching number below to open the order, apply a PWD / Senior discount if they have a valid ID, and confirm payment.</p><div class="opts">${open.map((x) => `<button class="btn s" data-cq="${esc(x.id)}" style="min-width:96px">#${esc(x.no)}<br><small>${esc(x.name || "Guest")} · ${peso(x.total)}</small></button>`).join("") || '<span class="m">No unpaid orders right now.</span>'}</div></div>`;
+        return;
+      }
+      const priv = cdisc.type === "Senior Citizen" || cdisc.type === "PWD";
+      const b = taxBreakdown({ ...o, total: orderGross(o), discountType: priv ? cdisc.type : "" });
+      const row = (l, v) => `<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${l}</span><span>${v}</span></div>`;
+      $("#app").innerHTML = `<div class="box" style="max-width:640px"><button class="btn s gh" id="cq-back" type="button">\u2190 ALL ORDERS</button>
+      <h3 style="margin-top:12px">Order #${esc(o.no)} · ${esc(o.name || "Guest")}</h3>
+      <div class="m">${esc(o.type || "")}${o.table ? " · Table " + esc(o.table) : ""} · ${new Date(o.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · <span class="pill ${o.pay === "GCash" ? "wait" : "cash"}">${payTag(o)}</span></div>
+      <ul>${(o.items || []).map((i) => `<li>${Number(i.q) || 0}\xD7 ${esc(i.n)} · ${peso(unit(i) * (Number(i.q) || 0))}${lineDesc(i) ? `<div class="m">${esc(lineDesc(i))}</div>` : ""}</li>`).join("")}</ul>
+      <h3>Discount</h3>
+      <div class="opts">${["None", "Senior Citizen", "PWD"].map((t) => `<button class="btn s ${cdisc.type === t ? "" : "gh"}" data-cdt="${t}" type="button">${t === "None" ? "No discount" : t}</button>`).join("")}</div>
+      ${priv ? `<input id="cd-name" placeholder="Name exactly as shown on ID" value="${esc(cdisc.name)}"><input id="cd-id" placeholder="${cdisc.type} ID number" value="${esc(cdisc.id)}"><label style="display:block;margin:8px 0"><input type="checkbox" id="cd-ok" ${cdisc.ok ? "checked" : ""}> I physically checked the customer's valid ${cdisc.type} ID</label>` : ""}
+      <div style="margin:12px 0;border-top:1px solid var(--line);padding-top:8px">${row("Gross amount", peso(b.gross))}${b.vatRemoved ? row("VAT exempted", peso(b.vatRemoved)) : ""}${b.discount ? row(cdisc.type + " discount (20%)", "-" + peso(b.discount)) : ""}<div style="display:flex;justify-content:space-between;font-size:22px;color:var(--y);padding-top:6px"><b>AMOUNT TO PAY</b><b>${peso(b.net)}</b></div></div>
+      ${o.pay === "Cash" ? `<input id="cd-cash" inputmode="decimal" placeholder="Cash received (optional, for change)" value="${esc(cdisc.cash || "")}"><div class="m" id="cd-change" style="margin-bottom:8px">${cdisc.cash && Number(cdisc.cash) >= b.net ? "Change: " + peso(Number(cdisc.cash) - b.net) : ""}</div>` : ""}<div class="opts"><button class="btn s gh" id="cq-save" type="button">SAVE DISCOUNT ONLY</button><button class="btn s" id="cq-pay" type="button" style="background:var(--g);color:#08150d">${o.pay === "GCash" ? "VERIFY GCASH & ISSUE RECEIPT" : "CASH RECEIVED · ISSUE RECEIPT"}</button></div></div>`;
     }
     function renderAdmin() {
       if (!authed) {
@@ -1533,12 +2519,17 @@
         };
         return;
       }
+      watchOrders();
       if (tab !== "orders") return renderTab();
       const today = (/* @__PURE__ */ new Date()).toDateString(), td = orders.filter((o) => new Date(o.t).toDateString() === today), paid = td.filter((o) => o.status === "done"), sum = paid.reduce((s, o) => s + o.total, 0);
       const cols = [["new", "New", "preparing", "START"], ["preparing", "Preparing", "ready", "READY"], ["ready", "Ready for pickup", "done", "PAID & DONE"]];
       $("#app").innerHTML = `${tabs()}${coll ? "" : `<div class="note">Live sync is off (not signed in). Orders from other devices won't appear here.</div>`}
-    <div class="stats" aria-live="polite"><div class="stat"><span class="m">ORDERS TODAY</span><b>${td.length}</b></div><div class="stat"><span class="m">SALES (COMPLETED)</span><b>${peso(sum)}</b></div><div class="stat"><span class="m">PROFIT</span><b>${peso(sum - costSum(paid))}</b></div><div class="stat"><span class="m">GCASH (DONE)</span><b>${peso(paid.filter((o) => o.pay === "GCash").reduce((s2, o) => s2 + o.total, 0))}</b></div><div class="stat"><span class="m">IN QUEUE</span><b>${td.filter((o) => o.status !== "done" && o.status !== "cancelled").length}</b></div></div>
-    <div class="cols" aria-live="polite">${cols.map(([s, l, nx, b]) => `<div class="col"><h3>${l}</h3>${orders.filter((o) => o.status === s).sort((a, c) => a.t - c.t).map((o) => `<div class="ord"><h4><span>#${o.no} ${esc(o.name || "")}${o.table ? " \xB7 T" + esc(o.table) : ""}</span><span>${peso(o.total)}</span></h4><ul>${o.items.map((i) => `<li>${i.q}\xD7 ${i.n}${lineDesc(i) ? `<div class="m">${lineDesc(i)}</div>` : ""}</li>`).join("")}</ul><div class="m">${new Date(o.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}${o.type ? " \xB7 " + o.type : ""}</div>${loy[lk(o.name)] ? `<div class="m">\u2B50 ${loy[lk(o.name)].stamps} stamps</div>` : ""}<div><span class="pill ${o.pay === "GCash" ? o.verified ? "ok" : "wait" : "cash"}">${payTag(o)}</span></div>${o.pay === "GCash" && !o.verified && s === "new" ? `<button class="btn s" style="background:var(--g)" data-vf="${o.id}">VERIFY GCASH</button>` : `<button class="btn s" data-id="${o.id}" data-st="${nx}">${b}</button>`} ${s === "ready" && canRedeem(o) ? `<button class="btn s" style="background:var(--g)" data-rd="${o.id}">\u{1F381} FREE DRINK</button>` : ""} ${s === "new" ? `<button class="btn s" style="background:var(--r);color:#fff" data-id="${o.id}" data-st="cancelled">CANCEL</button>` : ""}</div>`).join("") || '<p class="m">Empty</p>'}</div>`).join("")}</div>`;
+    <div class="stats"><div class="stat"><span class="m">ORDERS TODAY</span><b>${td.length}</b></div><div class="stat"><span class="m">SALES (COMPLETED)</span><b>${peso(sum)}</b></div><div class="stat"><span class="m">PROFIT</span><b>${peso(sum - costSum(paid))}</b></div><div class="stat"><span class="m">GCASH (DONE)</span><b>${peso(paid.filter((o) => o.pay === "GCash").reduce((s2, o) => s2 + o.total, 0))}</b></div><div class="stat"><span class="m">IN QUEUE</span><b>${td.filter((o) => o.status !== "done" && o.status !== "cancelled").length}</b></div></div>
+    <div class="cols">${cols.map(([s, l, nx, b]) => `<div class="col"><h3>${l}</h3>${orders.filter((o) => o.status === s).sort((a, c) => a.t - c.t).map((o) => `<div class="ord"><h4><span>#${o.no} ${esc(o.name || "")}${o.table ? " \xB7 T" + esc(o.table) : ""}</span><span>${peso(o.total)}</span></h4><ul>${o.items.map((i) => `<li>${i.q}\xD7 ${i.n}${lineDesc(i) ? `<div class="m">${lineDesc(i)}</div>` : ""}</li>`).join("")}</ul><div class="m">${new Date(o.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}${o.type ? " \xB7 " + o.type : ""}</div>${loy[lk(o.name)] ? `<div class="m">\u2B50 ${loy[lk(o.name)].stamps} stamps</div>` : ""}<div><span class="pill ${o.pay === "GCash" ? o.verified ? "ok" : "wait" : "cash"}">${payTag(o)}</span></div>${o.discountType ? `<div class="m">${esc(o.discountType)} · ${esc(o.discountName || "")} · ID ${esc(o.discountId || "not provided")}</div>` : ""}${o.pay === "GCash" && !o.verified && s === "new" ? `<button class="btn s" style="background:var(--g)" data-vf="${o.id}">VERIFY GCASH</button>` : `<button class="btn s" data-id="${o.id}" data-st="${nx}">${b}</button>`} ${s === "ready" && canRedeem(o) ? `<button class="btn s" style="background:var(--g)" data-rd="${o.id}">\u{1F381} FREE DRINK</button>` : ""} ${s === "new" ? `<button class="btn s" style="background:var(--r);color:#fff" data-id="${o.id}" data-st="cancelled">CANCEL</button>` : ""} ${o.pay === "Cash" && !o.paid ? `<button class="btn s" style="background:var(--g);color:#08150d" data-paid="${o.id}">CASH PAID · ISSUE RECEIPT</button>` : o.paid ? `<button class="btn s" data-receipt="${o.id}">PAYMENT RECEIPT</button>` : ""}${ptBtn(o)}</div>`).join("") || '<p class="m">Empty</p>'}</div>`).join("")}</div>`;
+    }
+    function renderHistory() {
+      const list = orders.slice().sort((a,b) => (b.t||0)-(a.t||0));
+      $("#app").innerHTML = `${tabs()}<div class="box"><h3>Order History</h3><p class="m">All customer orders, including completed and cancelled orders. Staff can edit or remove records. Changes are saved to the live database when connected.</p><div class="cols" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">${list.map(o => `<div class="ord"><h4><span>#${esc(o.no)} · ${esc(o.name || "Guest")}</span><span>${peso(o.amountDue != null ? o.amountDue : taxBreakdown(o).net)}</span></h4><div class="m">${new Date(o.t).toLocaleString()} · ${esc(o.type || "")} · ${esc(o.status || "")}</div><ul>${(o.items||[]).map(i => `<li>${Number(i.q)||0} × ${esc(i.n)} · ${peso(unit(i)*(Number(i.q)||0))}</li>`).join("")}</ul><div class="m">${esc(o.pay || "Cash")} · ${o.paid || (o.pay === "GCash" && o.verified) ? "PAID" : "UNPAID"}${o.discountType ? " · " + esc(o.discountType) + " · " + esc(o.discountName || "") + " · ID " + esc(o.discountId || "not provided") : ""}</div><div class="opts">${o.pay === "Cash" && !o.paid ? `<button class="btn s" data-paid="${o.id}">MARK CASH PAID</button>` : (o.paid || (o.pay === "GCash" && o.verified)) ? `<button class="btn s" data-receipt="${o.id}">RECEIPT</button>` : ""}<button class="btn s gh" data-edit-order="${o.id}">EDIT</button><button class="btn s" style="background:var(--r);color:#fff" data-delete-order="${o.id}">DELETE</button></div></div>`).join("") || '<p class="m">No orders yet.</p>'}</div></div>`;
     }
     function usage(L) {
       const f = forecast(L), u = {};
@@ -1547,7 +2538,7 @@
       return { u, f };
     }
     function renderSettings() {
-      $("#app").innerHTML = `${tabs()}<div class="box"><h3>GCash payment</h3><p class="m">Upload the QR from your GCash app (Receive Money, then Show QR). Customers see it when they choose GCash at checkout.</p><div class="g2"><div><input id="gno" placeholder="GCash number" value="${esc(GCASH.no)}"><input id="gnm" placeholder="Account name" value="${esc(GCASH.name)}"><div class="opts"><button class="btn s" id="gsave">Save details</button><label class="btn s" style="display:inline-block">Upload QR<input type="file" id="gqr" accept="image/*" hidden></label>${GCASH.qr ? '<button class="btn s" style="background:var(--r);color:#fff" id="gclr">Remove QR</button>' : ""}</div></div><div>${GCASH.qr ? `<img class="qr" src="${GCASH.qr}" alt="GCash QR code">` : '<div class="qrph">No QR uploaded yet</div>'}</div></div></div>`;
+      $("#app").innerHTML = `${tabs()}<div class="box"><h3>Receipt &amp; tax profile</h3><p class="m">Display settings for the digital payment receipt. Select VAT status only after confirming your BIR registration. This app receipt is not a registered BIR invoice.</p><label><input type="checkbox" id="tax-vat" ${TAX.vatRegistered ? "checked" : ""}> Business is VAT-registered (12% VAT-inclusive menu prices)</label><input id="tax-name" placeholder="BIR registered business name" value="${esc(TAX.registeredName)}"><input id="tax-tin" placeholder="TIN / Branch code" value="${esc(TAX.tin)}"><input id="tax-address" placeholder="Registered business address" value="${esc(TAX.address)}"><button class="btn s" id="tax-save">SAVE RECEIPT PROFILE</button></div><div class="box"><h3>GCash payment</h3><p class="m">Upload the QR from your GCash app (Receive Money, then Show QR). Customers see it when they choose GCash at checkout.</p><div class="g2"><div><input id="gno" inputmode="numeric" maxlength="13" placeholder="0917 123 4567" value="${esc(GCASH.no)}"><input id="gnm" placeholder="Account name" value="${esc(GCASH.name)}"><div class="opts"><button class="btn s" id="gsave">Save details</button><label class="btn s" style="display:inline-block">Upload QR<input type="file" id="gqr" accept="image/*" hidden></label>${GCASH.qr ? '<button class="btn s" style="background:var(--r);color:#fff" id="gclr">Remove QR</button>' : ""}</div></div><div>${GCASH.qr ? `<img class="qr" src="${GCASH.qr}" alt="GCash QR code">` : '<div class="qrph">No QR uploaded yet</div>'}</div></div></div>`;
     }
     function renderKds() {
       const now = Date.now(), q = orders.filter((o) => o.status === "new" || o.status === "preparing").sort((a, b) => a.t - b.t);
@@ -1555,23 +2546,24 @@
       const L = orders.filter((o) => o.status === "done"), hr = (new Date().getHours() + 1) % 24, days = new Set(L.map((o) => dk(o.t))).size || 1, H = L.filter((o) => new Date(o.t).getHours() === hr), need = {};
       let cups = 0;
       H.forEach((o) => o.items.forEach((i) => { cups += i.q / days; Object.entries(RECIPES[catOf[i.n]] || {}).forEach(([k, v]) => need[k] = (need[k] || 0) + v * i.q / days); }));
-      const tickets = (st, nx, b) => q.filter((o) => o.status === st).map((o) => { const m = mins(o); return `<div class="ord" style="border-left:6px solid ${col(m)}"><h4><span>#${o.no} ${esc(o.name || "")}${o.table ? " \xB7 T" + esc(o.table) : ""}</span><span style="color:${col(m)};font-size:24px">${m}m</span></h4><ul style="font-size:17px">${o.items.map((i) => `<li><b>${i.q}\xD7 ${i.n}</b><div class="m">${lineDesc(i)}</div></li>`).join("")}</ul><div class="m">${o.type || ""} \xB7 ${payTag(o)}</div><button class="btn s" data-id="${o.id}" data-st="${nx}" ${o.pay === "GCash" && !o.verified ? "disabled" : ""}>${o.pay === "GCash" && !o.verified ? "AWAITING PAYMENT" : b}</button></div>`; }).join("") || '<p class="m">Clear \u2615</p>';
+      const tickets = (st, nx, b) => q.filter((o) => o.status === st).map((o) => { const m = mins(o); return `<div class="ord" style="border-left:6px solid ${col(m)}"><h4><span>#${o.no} ${esc(o.name || "")}${o.table ? " \xB7 T" + esc(o.table) : ""}</span><span style="color:${col(m)};font-size:24px">${m}m</span></h4><ul style="font-size:17px">${o.items.map((i) => `<li><b>${i.q}\xD7 ${i.n}</b><div class="m">${lineDesc(i)}</div></li>`).join("")}</ul><div class="m">${o.type || ""} \xB7 ${payTag(o)}</div><button class="btn s" data-id="${o.id}" data-st="${nx}" ${o.pay === "GCash" && !o.verified ? "disabled" : ""}>${o.pay === "GCash" && !o.verified ? "AWAITING PAYMENT" : b}</button> ${ptBtn(o)}</div>`; }).join("") || '<p class="m">Clear \u2615</p>';
       $("#app").innerHTML = `${tabs()}<div class="box ai"><h3>\u{1F52E} Prep alert \xB7 next hour (${(hr % 12 || 12) + (hr < 12 ? " AM" : " PM")})</h3>${cups >= 1 ? `<p>Expect about <b>${Math.round(cups)}</b> cups. Prep: ${Object.entries(need).map(([k, v]) => `<b>${Math.round(v)} ${ING[k].u}</b> ${ING[k].n.toLowerCase()}`).join(", ")}.</p>` : '<p class="m">Not enough order history for this hour yet.</p>'}</div>
     <p class="leg"><i style="background:var(--g)"></i>under 3 min<i style="background:var(--y)"></i>3-6 min<i style="background:var(--r)"></i>over 6 min (auto-refreshes)</p>
-    <div class="cols" style="grid-template-columns:repeat(2,1fr)" aria-live="polite"><div class="col"><h3>New</h3>${tickets("new", "preparing", "START")}</div><div class="col"><h3>Preparing</h3>${tickets("preparing", "ready", "READY")}</div></div>`;
+    <div class="cols" style="grid-template-columns:repeat(2,1fr)"><div class="col"><h3>New</h3>${tickets("new", "preparing", "START")}</div><div class="col"><h3>Preparing</h3>${tickets("preparing", "ready", "READY")}</div></div>`;
     }
     function renderIng() {
       const td = (/* @__PURE__ */ new Date()).toDateString(), wt = waste.filter((w) => new Date(w.t).toDateString() === td);
-      const rows = Object.keys(ING).map((k) => { const r = ing[k], st = ING[k].u === "pc" ? 50 : 500; return `<tr><td>${ING[k].n}</td><td>${r ? r.stock <= 0 ? '<span class="low">EMPTY</span>' : r.stock + " " + ING[k].u : '<span class="m">not tracked</span>'}</td><td class="n"><input class="sm" type="number" min="0" step="0.01" value="${iCost(k)}" onchange="setIng('${k}',ing['${k}']?ing['${k}'].stock:0,+this.value)"> /${ING[k].u}</td><td class="n"><button class="btn s" data-ia="${k}|-${st}">\u2212${st}</button> <button class="btn s" data-ia="${k}|${st}">+${st}</button></td><td class="n"><input class="sm" type="number" min="0" placeholder="set" onchange="setIng('${k}',this.value)"></td></tr>`; }).join("");
+      const rows = Object.keys(ING).map((k) => { const r = ing[k], st = ING[k].u === "pc" ? 50 : 500; return `<tr><td>${ING[k].n}</td><td>${r ? r.stock <= 0 ? '<span class="low">EMPTY</span>' : r.stock + " " + ING[k].u : '<span class="m">not tracked</span>'}</td><td class="n"><input class="sm" type="number" min="0" step="0.01" value="${iCost(k)}" onchange="window.setIngCost('${k}',+this.value)"> /${ING[k].u}</td><td class="n"><button class="btn s" data-ia="${k}|-${st}">\u2212${st}</button> <button class="btn s" data-ia="${k}|${st}">+${st}</button></td><td class="n"><input class="sm" type="number" min="0" placeholder="set" onchange="setIng('${k}',this.value)"></td></tr>`; }).join("");
       const rec = MENU.map(([c, a]) => { const cost = Object.entries(RECIPES[c] || {}).reduce((s2, [k, q]) => s2 + q * iCost(k), 0), pr = a.reduce((s2, [, p]) => s2 + p, 0) / a.length; return `<tr><td>${c}</td><td>${Object.entries(RECIPES[c] || {}).map(([k, q]) => q + ING[k].u + " " + ING[k].n.toLowerCase()).join(", ")}</td><td class="n">${peso(cost)}</td><td class="n ${pr - cost < pr * 0.4 ? "low" : "ok2"}">${Math.round((pr - cost) / pr * 100)}%</td></tr>`; }).join("");
       const wb = [["Spilled milk \xB7 250 ml", "milk|250|Spilled milk"], ["Test shot \xB7 18 g", "beans|18|Test shot"], ["Wasted cup \xB7 1", "cups|1|Wasted cup"], ["Spoiled syrup \xB7 100 ml", "syrup|100|Spoiled syrup"], ["Matcha spill \xB7 10 g", "matcha|10|Matcha spill"]];
       $("#app").innerHTML = `${tabs()}<div class="box"><h3>Ingredients</h3><p class="m">Stock drops per recipe when you press START. Drinks are blocked for customers when an ingredient hits 0. Edit the price per unit and margins update everywhere.</p><table><tr><th>INGREDIENT</th><th>STOCK</th><th class="n">COST</th><th class="n">ADJUST</th><th class="n">SET</th></tr>${rows}</table></div>
     <div class="box"><h3>Recipe cost &amp; margin</h3><table><tr><th>CATEGORY</th><th>PER CUP</th><th class="n">COST</th><th class="n">MARGIN</th></tr>${rec}</table></div>
-    <div class="box"><h3>Log waste</h3><div class="opts">${wb.map(([l, v]) => `<button class="op" data-w="${v}">${l}</button>`).join("")}</div><p class="m">Today: ${wt.length} entries \xB7 ${peso(wt.reduce((s2, w) => s2 + w.cost, 0))} lost</p><table>${waste.slice(0, 8).map((w) => `<tr><td>${new Date(w.t).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(w.why)}</td><td class="n">${w.qty} ${ING[w.k].u}</td><td class="n">${peso(w.cost)}</td></tr>`).join("") || '<tr><td class="m">No waste logged.</td></tr>'}</table></div>`;
+    ${batchBox()}<div class="box"><h3>Log waste</h3><div class="opts">${wb.map(([l, v]) => `<button class="op" data-w="${v}">${l}</button>`).join("")}</div><p class="m">Today: ${wt.length} entries \xB7 ${peso(wt.reduce((s2, w) => s2 + w.cost, 0))} lost</p><table>${waste.slice(0, 8).map((w) => `<tr><td>${new Date(w.t).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(w.why)}</td><td class="n">${w.qty} ${ING[w.k].u}</td><td class="n">${peso(w.cost)}</td></tr>`).join("") || '<tr><td class="m">No waste logged.</td></tr>'}</table></div>`;
     }
     function renderTab() {
       const I = getInv(), L0 = getDone(), { u, f } = usage(L0);
       if (tab === "settings") return renderSettings();
+      if (tab === "history") return renderHistory();
       if (tab === "kds") return renderKds();
       if (tab === "ingredients") return renderIng();
       if (tab === "inventory") {
@@ -1652,20 +2644,18 @@
     // 10. CSV EXPORT
     // ============================================================
 
-    async function exportCsv() {
+    function exportCsv() {
       try {
-        const dl = await claude.use("downloads");
-        if (!dl) {
-          alert("Download isn't available here.");
-          return;
-        }
         const { list } = salesData(), q = (s) => {
           s = String(s);
           if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
           return '"' + s.replace(/"/g, '""') + '"';
         };
         const csv = "Date,Order No,Customer,Items,Revenue,Cost,Profit,Payment\n" + list.map((o) => [q(new Date(o.t).toLocaleString()), o.no, q(o.name || ""), q(o.items.map((i) => i.q + "x " + i.n + (i.add && i.add.length ? " (+" + i.add.join(", ") + ")" : "")).join("; ")), o.total, orderCost(o), o.total - orderCost(o), o.pay || "Cash"].join(",")).join("\n");
-        await dl.save({ filename: "hhood-sales-" + range + ".csv", data: csv });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+        a.download = "hhood-sales-" + range + ".csv";
+        a.click();
       } catch (e) {
         console.error(e);
       }
@@ -1690,27 +2680,34 @@
       };
       fr.readAsDataURL(e.target.files[0]);
     });
+    window.addEventListener("scroll", updateCoffeeIntro, { passive: true });
+    window.addEventListener("resize", updateCoffeeIntro, { passive: true });
     window.addEventListener("hashchange", () => {
-      if (!location.hash) landingStarted = false;
-      else if (location.hash === "#order") landingStarted = true;
+      if (!location.hash) { landingStarted = false; orderStep = "menu"; }
+      else if (location.hash === "#order") { landingStarted = true; if (!cart.length) orderStep = "menu"; }
       render();
     });
     setInterval(() => { if (authed && view() === "admin" && tab === "kds" && !typing()) render(); }, 3e4);
+    window.onGref = onGref;
+    window.setStock = setStock;
+    window.setIng = setIng;
+    window.setIngCost = (k, c) => setIng(k, ing[k] ? ing[k].stock : 0, c);
+    window.setTbv = (v) => { tbv = v; };
+
     render();
-    (async () => {
+    (() => {
       try {
-        const db = await claude.use("db");
-        if (!db) return;
-        coll = db.collection("orders");
-        coll.orderBy("t", "desc").limit(500).onSnapshot((s) => {
-          orders = s.docs.map((d) => d.data());
-          if (view() === "admin") render();
+        coll = makeRtdbColl("orders");
+        coll.onSnapshot((s) => {
+          orders = s.docs.map((d) => d.data()).sort((a, b) => (b.t || 0) - (a.t || 0));
+          if (seen === null) seen = new Set(orders.map((o) => o.id));
+          if ((view() !== "order" && !(view() === "cashier" && typing())) || (done && landingStarted)) render();
         }, (e) => {
           console.error(e);
           coll = null;
           render();
         });
-        invColl = db.collection("inventory");
+        invColl = makeRtdbColl("inventory");
         invColl.onSnapshot((s) => {
           inv = {};
           s.docs.forEach((d) => {
@@ -1719,13 +2716,14 @@
           });
           if (!(view() === "order" && document.activeElement && document.activeElement.tagName === "INPUT")) render();
         }, (e) => console.error(e));
-        ingColl = db.collection("ingredients");
+        ingColl = makeRtdbColl("ingredients");
         ingColl.onSnapshot((s) => { ing = {}; s.docs.forEach((d) => { const x = d.data(); if (x && x.k) ing[x.k] = x; }); if (!typing()) render(); }, (e) => console.error(e));
-        wasteColl = db.collection("waste");
-        wasteColl.orderBy("t", "desc").limit(100).onSnapshot((s) => { waste = s.docs.map((d) => d.data()); if (view() === "admin" && tab === "ingredients" && !typing()) render(); }, (e) => console.error(e));
-        setColl = db.collection("settings");
-        setColl.onSnapshot((s) => { s.docs.forEach((d) => { const x = d.data(); if (x && x.k === "gcash") GCASH = { no: x.no || GCASH.no, name: x.name || GCASH.name, qr: okQr(x.qr) }; }); if (!typing()) render(); }, (e) => console.error(e));
-        loyColl = db.collection("loyalty");
+        wasteColl = makeRtdbColl("waste");
+        wasteColl.onSnapshot((s) => { waste = s.docs.map((d) => d.data()).sort((a, b) => (b.t || 0) - (a.t || 0)); if (view() === "admin" && tab === "ingredients" && !typing()) render(); }, (e) => console.error(e));
+        setColl = makeRtdbColl("settings");
+        setColl.onSnapshot((s) => { s.docs.forEach((d) => { const x = d.data(); if (x && x.k === "gcash") GCASH = { no: x.no || GCASH.no, name: x.name || GCASH.name, qr: okQr(x.qr) };
+          if (x && x.k === "taxprofile") TAX = { ...TAX, ...x }; }); if (!typing()) render(); }, (e) => console.error(e));
+        loyColl = makeRtdbColl("loyalty");
         loyColl.onSnapshot((s) => { loy = {}; s.docs.forEach((d) => { const x = d.data(); if (x && x.k) loy[x.k] = x; }); if (view() === "admin" && !typing()) render(); }, (e) => console.error(e));
         render();
       } catch (e) {
